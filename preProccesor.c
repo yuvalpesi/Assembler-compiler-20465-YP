@@ -52,7 +52,7 @@ int preProccesor(char *inputFileName){
             if(checkRegister(mcroName)!=ERROR || checksEntry(mcroName)!=False || checksExtern(mcroName)!=False ||
                     checkData(mcroName)!=False || checkString(mcroName)!=False || commandType(mcroName)!=ERROR){
                 remove(sourceFile);
-                printf("Error: macro name is assembler world name '%s' \n",mcroName);
+                fprintf(stderr,"Error: macro name is assembler Reserved Words '%s' \n",mcroName);
                 freeAllSplitString(splitLine,wordsCounter);
                 free(sourceFile);
                 fclose(inputFile);

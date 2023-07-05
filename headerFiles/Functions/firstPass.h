@@ -45,3 +45,5 @@ int checkLabel(char *str);
 
 char *labelName(char *str);
 
+int checkLabelInCommand(char *str);
+

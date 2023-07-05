@@ -35,7 +35,7 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
     head=current;
 
     if(((IC+DC)+ADDRESS_START)>RAM_SIZE){
-        printf("Error: your program size is too big\n");
+        fprintf(stderr,"Error: your program size is too big\n");
         return False;
     }
 

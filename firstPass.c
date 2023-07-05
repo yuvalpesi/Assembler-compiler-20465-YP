@@ -49,7 +49,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
         labelname=labelName(line);
 
         if(labelname[strlen(labelname)-1]==':' && (thereIsSpace(labelname)==True || !isalpha(labelname[0]))){
-            printf("The %s is not valid Label in line %d \n",labelname,lineNumber);
+            fprintf(stderr,"The %s is not valid Label in line %d \n",labelname,lineNumber);
             errorCounter++;
             free(labelname);
             linestr=linestr->next;
@@ -58,7 +58,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
         if(labelname[strlen(labelname)-1]==':'  && checksEntry(line+ strlen(labelname))!=True){
             if(strlen(labelname)>MAX_LABLE){
-                printf("The %s is not valid Label length too big in line %d \n",labelname,lineNumber);
+                fprintf(stderr,"The %s is not valid Label length too big in line %d \n",labelname,lineNumber);
                 errorCounter++;
                 free(labelname);
                 linestr=linestr->next;
@@ -79,7 +79,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             strcpy(tempToken,labelname);
 
             if(checkLabel(tempToken)==False && strlen(tempToken)>MAX_LABLE){
-                printf("The %s Label too long can not pass 31 chars in line %d \n",tempToken,lineNumber);
+                fprintf(stderr,"The %s Label too long can not pass 31 chars in line %d \n",tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
@@ -89,7 +89,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             tempToken[strlen(tempToken)-1]='\0'; /* remover the ':' */
 
             if(checkRegister(tempToken)!=ERROR || commandType(tempToken)!=ERROR){
-                printf("The %s is not valid Label (assembly command) in line %d \n",tempToken,lineNumber);
+                fprintf(stderr,"The %s is not valid Label (assembly Reserved Words) in line %d \n",tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
@@ -97,7 +97,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             }
 
             if(symbolTableLockUp(table,tempToken) && symbolTableLockUpType(table,tempToken)==ERROR){
-                printf("The %s is not valid Label (already use) in line %d \n",tempToken,lineNumber);
+                fprintf(stderr,"The %s is not valid Label (already use) in line %d \n",tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
@@ -132,7 +132,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     line[strlen(line)-1]='\0';
                 }
                 if(line[0]!='"' || line[strlen(line)-1]!='"'){
-                    printf("ERROR: %s is not valid string (missing quotation marks) in line %d \n",line,lineNumber);
+                    fprintf(stderr,"ERROR: %s is not valid string (missing quotation marks) in line %d \n",line,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
                     continue;
@@ -185,9 +185,9 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                         if(number>MAX_NUMBER_SIZE || number<LOW_NUMBER_SIZE){
                             if(number<0){
-                                printf("Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
                             }else{
-                                printf("Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
                             }
                             index++;
                             errorCounter++;
@@ -276,7 +276,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                         if(allDigits(firsStr)==True || checkRegister(firsStr)!=ERROR){
                             errorCounter++;
-                            printf("Undefined operand type name %s in line %d \n",firsStr,lineNumber);
+                            fprintf(stderr,"Undefined operand type name %s in line %d \n",firsStr,lineNumber);
                             break;
                         }
 
@@ -288,6 +288,16 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             }
 
                         } else if(allDigits(firsStr)!=True && allDigits(line)!=True){
+                            if(checkLabelInCommand(firsStr)!=True){
+                                fprintf(stderr,"The %s is not valid Label in line %d \n",firsStr,lineNumber);
+                                errorCounter++;
+                                break;
+                            }
+                            if(checkLabelInCommand(line)!=True){
+                                fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                errorCounter++;
+                                break;
+                            }
                             codeNum=instalBinary(codeNum,function[command],command,directAddressing, directAddressing,A);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -315,7 +325,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                         if(command!=cmp && allDigits(line)==True){
                             errorCounter++;
-                            printf("Undefined operand type name %s in line %d \n",line,lineNumber);
+                            fprintf(stderr,"Undefined operand type name %s in line %d \n",line,lineNumber);
                             break;
                         }
 
@@ -377,6 +387,18 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                         /* first argu */
                         if(allDigits(firsStr)==True){
                             number= atoi(firsStr);
+
+                            if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
+                                if(number<0){
+                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                }else{
+                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                }
+                                index++;
+                                errorCounter++;
+                                break;
+                            }
+
                             codeNum=instalBinary(codeNum,firsStr,number,0,0,A);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -386,6 +408,12 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
                         } else {
+                            if(checkLabelInCommand(firsStr)!=True){
+                                fprintf(stderr,"The %s is not valid Label in line %d \n",firsStr,lineNumber);
+                                errorCounter++;
+                                break;
+                            }
+
                             codeNum=instalBinary(codeNum,firsStr,0,0,0,R);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -398,11 +426,29 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                              addNode(&head, createNodeItem(address++, codeNum));
                              (*IC)++;
                         } else if(allDigits(line)!=True){
+                             if(checkLabelInCommand(line)!=True){
+                                 fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                 errorCounter++;
+                                 break;
+                             }
+
                             codeNum=instalBinary(codeNum,line,0,0,0,R);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
                         } else if(command==cmp && allDigits(line)==True){
                              number= atoi(firsStr);
+
+                             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
+                                 if(number<0){
+                                     fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                 }else{
+                                     fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                 }
+                                 index++;
+                                 errorCounter++;
+                                 break;
+                             }
+
                              codeNum=instalBinary(codeNum,line,number,0,0,A);
                              addNode(&head, createNodeItem(address++, codeNum));
                              (*IC)++;
@@ -423,7 +469,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                     if(command!=prn && allDigits(line)==True){
                         errorCounter++;
-                        printf("Undefined operand type name %s in line %d \n",line,lineNumber);
+                        fprintf(stderr,"Undefined operand type name %s in line %d \n",line,lineNumber);
                         break;
                     }
 
@@ -434,6 +480,17 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
                             number=atoi(line);
+
+                            if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
+                                if(number<0){
+                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                }else{
+                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                }
+                                errorCounter++;
+                                break;
+                            }
+
                             codeNum=instalBinary(codeNum,line,number,0,0,A);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -447,9 +504,17 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             (*IC)++;
 
                         } else{
+
+                            if(checkLabelInCommand(line)!=True){
+                                fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                errorCounter++;
+                                break;
+                            }
+
                             codeNum=instalBinary(codeNum,function[command],command,0,directAddressing,A);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
+
                             codeNum=instalBinary(codeNum,line,0,0,0,R);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -466,6 +531,13 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                              (*IC)++;
 
                         } else if(allDigits(line)!=True){
+
+                             if(checkLabelInCommand(line)!=True){
+                                 fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                 errorCounter++;
+                                 break;
+                             }
+
                             codeNum=instalBinary(codeNum,function[command],command,0,directAddressing,A);
                             addNode(&head, createNodeItem(address++, codeNum));
                             (*IC)++;
@@ -489,7 +561,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
         } else {
             firsStr=labelName(line);
             errorCounter++;
-            printf("Undefined command name %s in line %d \n",firsStr,lineNumber);
+            fprintf(stderr,"Undefined command name %s in line %d \n",firsStr,lineNumber);
             free(firsStr);
             firsStr=NULL;
             linestr=linestr->next;
@@ -699,4 +771,20 @@ char *labelName(char *str){
     }
 
     return NULL;
+}
+
+int checkLabelInCommand(char *str){
+    int i; /*8**/
+
+    if(!isalpha(str[0])){
+        return False;
+    }
+
+    for(i=1;i<MAX_LABLE;i++){
+        if(!isalnum(str[i]) && i<strlen(str)){
+            return False;
+        }
+    }
+
+    return True;
 }

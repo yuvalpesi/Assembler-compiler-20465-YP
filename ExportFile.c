@@ -8,7 +8,7 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
     char *base64Data=NULL,temp[2];
 
     sourceFile=(char*)malloc(fileSize+4 * sizeof(char));
-    base64Data=malloc(13*sizeof (char ));
+    base64Data=malloc(sizeof (char)*(WORD_SIZE+1));
     if(sourceFile == NULL || base64Data==NULL){
         printf(" Failed to allocate memory.\n");
         return;
@@ -30,7 +30,8 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
     while (current!=NULL){
         if(base64Data!=NULL){
             free(base64Data);
-            base64Data= malloc(13*sizeof(char));
+            base64Data=NULL;
+            base64Data= malloc(WORD_SIZE+1*sizeof(char));
             base64Data[0]='\0';
         }
 
@@ -305,22 +306,23 @@ void printExtFile(char *argv,LineHolder *head){
 char *binaryToBase64(const char *binary){
     const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     char *first=NULL,*sec=NULL,*base64=NULL;
-    int i,resultFirst=0,resultSec=0;
+    int i,resultFirst=0,resultSec=0,sizeOfBase64=3,halfWord=(WORD_SIZE/2);
 
-    first = malloc(7*sizeof(char ));
-    sec = malloc(7*sizeof(char ));
-    base64= malloc(sizeof(char)*3);
+    first = malloc(sizeof(char)*((WORD_SIZE/2)+1));
+    sec = malloc(sizeof(char)*((WORD_SIZE/2)+1));
+    base64= malloc(sizeof(char)*sizeOfBase64);
 
     if(first==NULL || sec==NULL || base64==NULL){
         printf(" Failed to allocate memory.\n");
         exit(0);
     }
 
-    strncpy(first,binary,6);
-    strcpy(sec,binary);
-    memmove(sec,sec+6, strlen(sec));
+    strncpy(first,binary,halfWord);
+    first[strlen(first)+1]='\0';
+    strcpy(sec,binary+halfWord);
+    sec[strlen(sec)+1]='\0';
 
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < halfWord; i++) {
         resultFirst <<= 1;
         resultFirst |= (first[i] - '0');
         resultSec <<= 1;
@@ -329,7 +331,7 @@ char *binaryToBase64(const char *binary){
 
     base64[0]=base64_table[resultFirst];
     base64[1]=base64_table[resultSec];
-    base64[3]='\0';
+    base64[2]='\0';
 
     free(first);
     free(sec);

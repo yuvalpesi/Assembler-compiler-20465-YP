@@ -7,3 +7,4 @@ void printExtFile(char *argv,LineHolder *head);
 
 void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC);
 
+char *binaryToBase64(const char *binary);

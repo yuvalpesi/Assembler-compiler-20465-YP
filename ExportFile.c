@@ -2,13 +2,14 @@
 
 void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
     FILE *fd=NULL;
-    char *sourceFile=NULL,*nameTemp=NULL;
+    char *sourceFile=NULL,*nameTemp=NULL,*base64=NULL;
     LineHolder *current=head;
     int i,fileSize=strlen(argv);
-    char base64Data[5];
+    char *base64Data=NULL,temp[2];
 
     sourceFile=(char*)malloc(fileSize+4 * sizeof(char));
-    if(sourceFile == NULL){
+    base64Data=malloc(13*sizeof (char ));
+    if(sourceFile == NULL || base64Data==NULL){
         printf(" Failed to allocate memory.\n");
         return;
     }
@@ -21,85 +22,122 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
     if((fd=fopen(sourceFile,"w+"))==NULL){
         fprintf(stderr, "\n Error: Failed to create the expanded source code file %s. \n", sourceFile);
         free(sourceFile);
-        return ;
+        return;
     }
 
-    fprintf(fd,"         %d %d   ",IC,DC);
+    fprintf(fd,"       %d %d   ",IC,DC);
 
     while (current!=NULL){
-        fprintf(fd,"\n0%d       ",current->address);
+        if(base64Data!=NULL){
+            free(base64Data);
+            base64Data= malloc(13*sizeof(char));
+            base64Data[0]='\0';
+        }
+
+        fprintf(fd,"\n       ");
         nameTemp= strDup(current->Binary->lableName);
         if(checkString(nameTemp)==True || checkData(nameTemp)==True){
+
             for (i = 11; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.directiveSentence->directive >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
+            base64= binaryToBase64(base64Data);
+            fprintf(fd,"%s", base64);
         } else if(checkRegister(nameTemp)!=ERROR){
+
             for (i = 4; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.registerAddress->SecRed >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
             for (i = 4; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.registerAddress->FirstRed >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
 
             for (i = 1; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.registerAddress->ARE >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
 
+            base64= binaryToBase64(base64Data);
+            fprintf(fd,"%s", base64);
+
         } else if(commandType(nameTemp)!=ERROR){
+
             for (i = 2; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.first->sourceOperand >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
             for (i = 3; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.first->opcode >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
 
             for (i = 2; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.first->targetOperand >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
 
             for (i = 1; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.first->ARE >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
+
+            base64= binaryToBase64(base64Data);
+            fprintf(fd,"%s", base64);
+
         } else if(allDigits(nameTemp)==True){
+
             for(i = 9; i >= 0; i--){
                 unsigned int bit = (current->Binary->operandStucter.immediate->Operand >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
             for(i = 1; i >= 0; i--){
 
                 unsigned int bit = (current->Binary->operandStucter.immediate->ARE >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
+
+            base64= binaryToBase64(base64Data);
+            fprintf(fd,"%s", base64);
+
         } else {
+
             for(i = 9; i >= 0; i--){
                 unsigned int bit = (current->Binary->operandStucter.address->Operand >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
             for(i = 1; i >= 0; i--){
                 unsigned int bit = (current->Binary->operandStucter.address->ARE >> i) & 1;
-                fprintf(fd,"%u", bit);
+                sprintf(temp,"%u",bit);
+                strcat(base64Data,temp);
             }
 
+            base64= binaryToBase64(base64Data);
+            fprintf(fd,"%s", base64);
         }
 
-
-
-        /*fprintf(fd,"%u",binaryHolder);*/
         current=current->next;
         free(nameTemp);
+        free(base64);
     }
 
 
     fclose(fd);
     free(sourceFile);
+    free(base64Data);
 }
 
 void printObjFile(char *argv,LineHolder *head,int IC,int DC){
@@ -196,7 +234,6 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
         current=current->next;
     }
 
-
     fclose(fd);
     free(sourceFile);
 }
@@ -264,3 +301,38 @@ void printExtFile(char *argv,LineHolder *head){
     fclose(fd);
     free(sourceFile);
 }
+
+char *binaryToBase64(const char *binary){
+    const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    char *first=NULL,*sec=NULL,*base64=NULL;
+    int i,resultFirst=0,resultSec=0;
+
+    first = malloc(7*sizeof(char ));
+    sec = malloc(7*sizeof(char ));
+    base64= malloc(sizeof(char)*3);
+
+    if(first==NULL || sec==NULL || base64==NULL){
+        printf(" Failed to allocate memory.\n");
+        exit(0);
+    }
+
+    strncpy(first,binary,6);
+    strcpy(sec,binary);
+    memmove(sec,sec+6, strlen(sec));
+
+    for (i = 0; i < 6; i++) {
+        resultFirst <<= 1;
+        resultFirst |= (first[i] - '0');
+        resultSec <<= 1;
+        resultSec |= (sec[i] - '0');
+    }
+
+    base64[0]=base64_table[resultFirst];
+    base64[1]=base64_table[resultSec];
+    base64[3]='\0';
+
+    free(first);
+    free(sec);
+    return base64;
+}
+

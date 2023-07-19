@@ -3,7 +3,7 @@
 int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,int*DC){
     FILE *fd=NULL;
     char *line=NULL,*sourceFile=NULL,*tempToken=NULL,*secStr=NULL,*firsStr=NULL,*labelname=NULL;
-    int command,number,c,address=100,strSpace,index=0,errorCounter=0,lineNumber=0;
+    int command,number,c,strSpace,index=0,errorCounter=0,lineNumber=0;
     symbolTable *table=symbolTabl;
     LineHolder *head=*nodeHead;
     Operand *codeNum=NULL;
@@ -12,11 +12,11 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                                   "not","clr","lea","inc","dec","jmp","bne","red","prn","jsr","rts","stop"};
 
     sourceFile=(char*)malloc((strlen(argv)+4) * sizeof(char));
-    line=(char*)calloc(MAX_LINE_LENGHT + 2,sizeof(char));
+    line=(char*)calloc(MAX_LINE_LENGHT *4,sizeof(char));
 
     if(sourceFile == NULL || line==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,argv,strlen(argv));
@@ -26,11 +26,11 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
 
     if((fd=fopen(sourceFile,"r"))==NULL){
-        printf(" Error cant open file\n");
-        exit(0);
+        printf("Error: cant open file %s\n",sourceFile);
+        return False;
     }
 
-    while (!feof(fd) && fgets(line,MAX_LINE_LENGHT+2,fd)!=NULL){
+    while (!feof(fd) && fgets(line,MAX_LINE_LENGHT*4,fd)!=NULL){
         addNodeLine(&linestr, createNodeLine(line));
     }
 
@@ -40,46 +40,53 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
     while(linestr!=NULL){
         lineNumber++;
+
+        if(firsStr!=NULL){
+            free(firsStr);
+            firsStr=NULL;
+        }
+
         if(line!=NULL){
             free(line);
             line=NULL;
         }
+
         line=strDup(linestr->lineStr);
-        TOO_LONG_LINE(line,lineNumber,errorCounter)
+        if(strlen(line)>MAX_LINE_LENGHT+2){
+            memmove(line,line, strlen(line)*2);
+            line[strlen(line)-1]='\0';
+            fprintf(stderr,"Error in file %s: Too long line '%s', can not pass 80 chars in line number %d \n",sourceFile,line,lineNumber);
+            errorCounter++;
+            free(line);
+            line=NULL;
+            linestr=linestr->next;
+            continue;
+        }
         labelname=labelName(line);
 
         if(labelname[strlen(labelname)-1]==':' && (thereIsSpace(labelname)==True || !isalpha(labelname[0]))){
-            fprintf(stderr,"The %s is not valid Label in line %d \n",labelname,lineNumber);
+            fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,labelname,lineNumber);
             errorCounter++;
             free(labelname);
             linestr=linestr->next;
             continue;
         }
 
-        if(labelname[strlen(labelname)-1]==':'  && checksEntry(line+ strlen(labelname))!=True){
-            if(strlen(labelname)>MAX_LABLE){
-                fprintf(stderr,"The %s is not valid Label length too big in line %d \n",labelname,lineNumber);
-                errorCounter++;
-                free(labelname);
-                linestr=linestr->next;
-                continue;
-            }
-
-            strSpace = strlen(labelname); /* new */
+        if(labelname[strlen(labelname)-1]==':'  && checksEntry(line+ strlen(labelname))!=True && checksExtern(line+ strlen(labelname))!=True){
+            strSpace = strlen(labelname);
             memmove(line,line+strSpace, strlen(line)+1);
-            /*line+=strSpace;*/
             line=ignorSpace(line);
 
             tempToken=(char *) malloc(strSpace*sizeof (char));
             if(tempToken==NULL){
-                printf(" Failed to allocate memory.\n");
-                exit(0);
+                printf("Error: Failed to allocate memory.\n");
+                exit(1);
             }
 
             strcpy(tempToken,labelname);
 
-            if(checkLabel(tempToken)==False && strlen(tempToken)>MAX_LABLE){
-                fprintf(stderr,"The %s Label too long can not pass 31 chars in line %d \n",tempToken,lineNumber);
+            if(strlen(tempToken)>MAX_LABLE){
+                fprintf(stderr,"Error in file %s: The '%s' Label too long can not pass 31 chars in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
@@ -88,32 +95,45 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
             tempToken[strlen(tempToken)-1]='\0'; /* remover the ':' */
 
+            if(checkLabelInCommand(tempToken)==False){
+                fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,tempToken,lineNumber);
+                errorCounter++;
+                free(tempToken);
+                linestr=linestr->next;
+                continue;
+            }
+
             if(checkRegister(tempToken)!=ERROR || commandType(tempToken)!=ERROR){
-                fprintf(stderr,"The %s is not valid Label (assembly Reserved Words) in line %d \n",tempToken,lineNumber);
+                fprintf(stderr,"Error in file %s: The '%s' is not valid Label (assembly Reserved Words) in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
                 continue;
             }
 
-            if(symbolTableLockUp(table,tempToken) && symbolTableLockUpType(table,tempToken)==ERROR){
-                fprintf(stderr,"The %s is not valid Label (already use) in line %d \n",tempToken,lineNumber);
+            if(symbolTableLockUp(table,tempToken)!=NULL && symbolTableLockUpICDC(table,tempToken)!=ERROR){
+                fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
                 linestr=linestr->next;
                 continue;
             }
 
-            symbolTableInsert(table,tempToken,address,NoEntryOrExtern);
-            free(tempToken);
+            if(commandType(line)!=ERROR){
+                symbolTableInsert(table,tempToken,*IC,sIC);
+                free(tempToken);
+            } else{
+                symbolTableInsert(table,tempToken,*DC,sDC);
+                free(tempToken);
+            }
         }
 
-        if(labelname[strlen(labelname)-1]==':'  && checksEntry(line+ strlen(labelname))==True){
-            strSpace = strlen(labelname); /* new */
+        if(labelname[strlen(labelname)-1]==':'  && (checksEntry(line+ strlen(labelname))==True ||checksExtern(line+ strlen(labelname))==True)){
+            strSpace = strlen(labelname);
             memmove(line,line+strSpace, strlen(line)+1);
-            /*line+=strSpace;*/
             line=ignorSpace(line);
             free(labelname);
+            labelname=NULL;
         }
 
         if(labelname!=NULL){
@@ -125,14 +145,21 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 secStr= strDup(line);
                 secStr[8]='\0';
                 memmove(line,line+7, strlen(line)+1);
-                /*line+=7;*/
-                /*RemoveAllSpaces(line);*/
                 line= ignorSpace(line);
+
+                if(line[0]=='\n'){
+                    line[strlen(line)-1]='\0';
+                    fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
                 if(line[strlen(line)-1]=='\n'){
                     line[strlen(line)-1]='\0';
                 }
                 if(line[0]!='"' || line[strlen(line)-1]!='"'){
-                    fprintf(stderr,"ERROR: %s is not valid string (missing quotation marks) in line %d \n",line,lineNumber);
+                    fprintf(stderr,"Error in file %s: '%s' is not valid string (missing quotation marks) in line %d \n",sourceFile,line,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
                     continue;
@@ -141,13 +168,13 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 index=0;
                 while (line[index] != '\0'){
                     c=(unsigned char)line[index];
-                    codeNum= instalBinary(codeNum,secStr,c,0,0,0);
-                    addNode(&head, createNodeItem(address++, codeNum));
+                    codeNum= instalBinary(secStr,c,0,0,0);
+                    addNode(&head, createNodeItem(*DC, codeNum));
                     index++;
                     (*DC)++;
                     if (line[index] == '\0'){
-                        codeNum= instalBinary(codeNum,secStr,'\0',0,0,0);
-                        addNode(&head, createNodeItem(address++, codeNum));
+                        codeNum= instalBinary(secStr,'\0',0,0,0);
+                        addNode(&head, createNodeItem(*DC, codeNum));
                         (*DC)++;
                     }
                 }
@@ -158,51 +185,100 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 secStr= strDup(line);
                 secStr[6]='\0';
                 memmove(line,line+5, strlen(line)+1);
-                /*line+=5;*/
-                RemoveAllSpaces(line);
+                line= ignorSpace(line);
 
+                if(line[0]=='\n'){
+                    line[strlen(line)-1]='\0';
+                    fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                if(findComma(line)==False){
+                    line[strlen(line)-1]='\0';
+                    fprintf(stderr,"Error in file %s: Missing comma between the arguments or there is illegal space '%s' line number %d \n",sourceFile,line,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                RemoveAllSpaces(line);
                 index = 0;
-                ILLEGAL_COMMA(line[index],lineNumber,errorCounter)
+
+                if(line[index]==','){
+                    fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,line,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
                 while (line[index] != '\0' && index<strlen(line)) {
 
-                    if(!isdigit(line[index]) && line[index]!=',' && line[index]!='\0' && line[index]!='+'){
-                        MISSING_PARAMITER_DATA(line[index],lineNumber,errorCounter,index)
-                        INVALID_PARAMETER_NOT_A_NUMBER(line[index], line[index+1], lineNumber, errorCounter, index)
+                    if(!isdigit(line[index]) && line[index]!=',' && line[index]!='+' && line[index]!='\0'){
+                        if(!line[index]){
+                            fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
+                            errorCounter++;
+                            index++;
+                            continue;
+                        }
                     }
 
                     if(line[index+1]=='\0'&& !isdigit(line[index])){
-                        EXTRANEOUS_TEXT_AFTER_END_OF_COMMAND(line[strlen(line)-1],lineNumber,errorCounter,index)
-                    }
-
-                    if(line[index]==',' && line[index+1]==','){
-                        MULIPLE_CONSECUTIVE_COMMAS_DATA(line[index],lineNumber,errorCounter,index)
-
+                        fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        index++;
+                        continue;
                     }
 
                     if(line[index] != ',' && line[index] != '\0'){
-                        memmove(line,line+index, strlen(line)+1);
+                        if(allDigitsForData(line)!=ERROR){
+                            index+=allDigitsForData(line);
+                            fprintf(stderr,"Error in file %s: Invalid parameter - not a number '%s' in line number %d \n",sourceFile,line,lineNumber);
+                            errorCounter++;
+                            while (line[index]!=',')index++;
+                            index++;
+                            memmove(line,line+index, strlen(line));
+                            continue;
+                        }
                         number=getNumberFromData(line,&index);
+                        if(!isdigit(line[index-1]) && line[index]=='\0'){
+                            fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
+                            errorCounter++;
+                            break;
+                        }
+
+                        if(line[index-1]==',' && line[index]==','){
+                            fprintf(stderr,"Error in file %s: Multiple consecutive commas '%s' in line number %d \n",sourceFile,line,lineNumber);
+                            errorCounter++;
+                            break;
+                        }
+                        memmove(line,line+index, strlen(line));
+                        index=0;
+
 
                         if(number>MAX_NUMBER_SIZE || number<LOW_NUMBER_SIZE){
                             if(number<0){
-                                fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too small\n",sourceFile,lineNumber,number);
                             }else{
-                                fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too big\n",sourceFile,lineNumber,number);
                             }
                             index++;
                             errorCounter++;
                             continue;
                         }
 
-                        codeNum= instalBinary(codeNum,secStr,number,0,0,0);
-                        addNode(&head, createNodeItem(address++, codeNum));
+                        codeNum= instalBinary(secStr,number,0,0,0);
+                        addNode(&head, createNodeItem(*DC, codeNum));
                         (*DC)++;
+
                         continue;
                     }
 
                     index++;
-
                 }
+
+
                 linestr=linestr->next;
                 free(secStr);
                 continue;
@@ -211,17 +287,132 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             if (checksExtern(line)==True ){
                 secStr= strDup(line);
                 memmove(secStr,secStr+8, strlen(line)+1);
-                /*secStr+=8;*/
-                RemoveAllSpaces(secStr);
-                symbolTableInsert(table,secStr,0,sEXETRN);
+                secStr= ignorSpace(secStr);
+                memmove(line,line+7, strlen(line)+1);
+                line= ignorSpace(line);
+
+                if(line[0]=='\n'){
+                    line[strlen(line)-1]='\0';
+                    fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                if(secStr[strlen(secStr)-1]=='\n'){
+                    secStr[strlen(secStr)-1]='\0';
+                }
+                if(firsStr!=NULL)free(firsStr);
+
+                if(secStr[0]==','){
+                    fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,secStr,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                if(secStr[strlen(secStr)-1]==','){
+                    fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,secStr,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                while(secStr!=NULL){
+                    firsStr=strFirstArgu(secStr);
+                    if(firsStr==NULL){
+                        free(secStr);
+                        firsStr=NULL;
+                        break;
+                    }
+
+                    memmove(secStr,secStr+strlen(firsStr), strlen(secStr));
+                    secStr= ignorSpace(secStr);
+
+                    if(secStr[0]=='\0'){
+                        free(secStr);
+                        secStr=NULL;
+                    }
+
+                    if(secStr!=NULL && secStr[0]!=','){
+                        errorCounter++;
+                        fprintf(stderr,"Error in file %s: Missing comma '%s' in line %d \n",sourceFile,secStr,lineNumber);
+                        break;
+                    }
+
+                    if(secStr!=NULL && secStr[0]==',' ){
+                        memmove(secStr,secStr+1, strlen(secStr));
+                        secStr= ignorSpace(secStr);
+                    }
+
+                    if(checkLabelInCommand(firsStr)==False){
+                        fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,firsStr,lineNumber);
+                        errorCounter++;
+                        free(firsStr);
+                        firsStr=NULL;
+                        continue;
+                    }
+
+                    if(symbolTableLockUpType(table,firsStr)==sENTRY || symbolTableLockUpType(table,firsStr)==sEXETRN){
+                        fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,firsStr,lineNumber);
+                        errorCounter++;
+                        free(firsStr);
+                        firsStr=NULL;
+                        continue;
+                    }
+
+                    symbolTableInsert(table,firsStr,0,sEXETRN);
+                    free(firsStr);
+                    firsStr=NULL;
+                }
+
                 linestr=linestr->next;
-                free(secStr);
                 continue;
             } else if(checksEntry(line)==True){
                 secStr=strDup(line);
                 memmove(secStr,secStr+7, strlen(line)+1);
-                /*secStr+=7;*/
+
+                memmove(line,line+6, strlen(line)+1);
+                line= ignorSpace(line);
+
+                if(line[0]=='\n'){
+                    line[strlen(line)-1]='\0';
+                    fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
+                    errorCounter++;
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                if(secStr[strlen(secStr)-1]=='\n'){
+                    secStr[strlen(secStr)-1]='\0';
+                }
+
+                if(thereIsSpace(secStr)==True){
+                    fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
+                    errorCounter++;
+                    free(secStr);
+                    linestr=linestr->next;
+                    continue;
+                }
+
                 RemoveAllSpaces(secStr);
+
+                if(checkLabelInCommand(secStr)==False){
+                    fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
+                    errorCounter++;
+                    free(secStr);
+                    linestr=linestr->next;
+                    continue;
+                }
+
+                if((symbolTableLockUpType(table,secStr)==sENTRY || symbolTableLockUpType(table,secStr)==sEXETRN)){
+                    fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,secStr,lineNumber);
+                    errorCounter++;
+                    free(secStr);
+                    linestr=linestr->next;
+                    continue;
+                }
+
                 symbolTableInsert(table,secStr,0,sENTRY);
                 linestr=linestr->next;
                 free(secStr);
@@ -232,43 +423,107 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
         line=ignorSpace(line);
         command = commandType(line);
 
-
+        if(firsStr!=NULL){
+            free(firsStr);
+            firsStr=NULL;
+        }
         if (command != ERROR) {
             memmove(line,line+strlen(function[command]), strlen(line)+1);
-            /*line+=strlen(function[command]);*/
-            RemoveAllSpaces(line);
-            ILLEGAL_COMMA(line[0],lineNumber,errorCounter)
+            line= ignorSpace(line);
+
+            if(line[0]==','){
+                line[strlen(line)-1]='\0';
+                fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,line,lineNumber);
+                errorCounter++;
+                linestr=linestr->next;
+                continue;
+            }
             switch (command) {
                 case mov:case cmp:case add:case lea:case sub:
                     firsStr=strFirstArgu(line);
-                    MISSING_PARAMITER(firsStr[0],lineNumber,errorCounter)
-                    memmove(line,line+(strlen(firsStr)), strlen(line)+1);
-                    /*line+= (strlen(firsStr));  sec argu */
-                    MISSING_COMMA(line[0],lineNumber,errorCounter)
+
+                    if(!firsStr[0]){
+                        fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    memmove(line,line+(strlen(firsStr)), strlen(line)+1); /*sec argu*/
+                    if(firsStr[strlen(firsStr)-1]==' '){
+                        firsStr[strlen(firsStr)-1]='\0';
+                    }
+                    line= ignorSpace(line);
+
+                    if(line[0]!=','){
+                        fprintf(stderr,"Error in file %s: Missing comma '%s' in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
                     memmove(line,line+1, strlen(line)+1);
-                    /*line+=1;*/
-                    MISSING_PARAMITER(line[0],lineNumber,errorCounter)
-                    MULIPLE_CONSECUTIVE_COMMAS(line[0],lineNumber,errorCounter)
+                    if(line[strlen(line)-1]=='\n'){
+                        line[strlen(line)-1]='\0';
+                    }
+
+                    if(!line[0]){
+                        fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    if(line[0]==','){
+                        fprintf(stderr,"Error in file %s: Multiple consecutive commas '%s' in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    line= ignorSpace(line);
+
+                    if(thereIsSpace(line)==True || thereIsSpace(firsStr)==True){
+                        if(thereIsSpace(firsStr)==True){
+                            fprintf(stderr,"Error in file %s: The '%s' is not valid parameter can not be with spaces in line %d \n",sourceFile,firsStr,lineNumber);
+                            errorCounter++;
+                            break;
+                        } else{
+                            fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
+                            errorCounter++;
+                            break;
+                        }
+                    }
+
+                    if(line[strlen(line)-1]==','){
+                        fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
 
                     if(firsStr[0]=='@'){
-                        UNDEFINED_REGISTER_NUMBER(checkRegister(firsStr),lineNumber,errorCounter)
+                        if(checkRegister(firsStr)==ERROR){
+                            errorCounter++;
+                            fprintf(stderr,"Error in file %s: Undefined register number name '%s' in line %d \n",sourceFile,firsStr,lineNumber);
+                            break;
+                        }
                     }
 
                     if(line[0]=='@'){
-                        UNDEFINED_REGISTER_NUMBER(checkRegister(line),lineNumber,errorCounter)
+                        if(checkRegister(line)==ERROR){
+                            errorCounter++;
+                            fprintf(stderr,"Error in file %s: Undefined register number name '%s' in line %d \n",sourceFile,line,lineNumber);
+                            break;
+                        }
                     }
 
                     if(command!=lea && checkRegister(firsStr)!= ERROR && checkRegister(line)!=ERROR){
 
                         if(checkRegister(firsStr)!=ERROR && checkRegister(line)!=ERROR){
-                            codeNum=instalBinary(codeNum,function[command],command,registerDirectAddressing,registerDirectAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,registerDirectAddressing,registerDirectAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
                         if(checkRegister(firsStr)!=ERROR && checkRegister(line)!=ERROR){
-                            codeNum=instalBinary(codeNum,firsStr,0,checkRegister(firsStr),checkRegister(line),A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(firsStr,0,checkRegister(firsStr),checkRegister(line),A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
@@ -276,48 +531,48 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                         if(allDigits(firsStr)==True || checkRegister(firsStr)!=ERROR){
                             errorCounter++;
-                            fprintf(stderr,"Undefined operand type name %s in line %d \n",firsStr,lineNumber);
+                            fprintf(stderr,"Error in file %s: Undefined operand type name '%s' in line %d \n",sourceFile,firsStr,lineNumber);
                             break;
                         }
 
                         if(checkRegister(line)!=ERROR){
                             if(allDigits(firsStr)!=True){
-                               codeNum=instalBinary(codeNum,function[command],command,directAddressing,registerDirectAddressing,A);
-                               addNode(&head, createNodeItem(address++, codeNum));
+                               codeNum=instalBinary(function[command],command,directAddressing,registerDirectAddressing,A);
+                               addNode(&head, createNodeItem(*IC, codeNum));
                                (*IC)++;
                             }
 
                         } else if(allDigits(firsStr)!=True && allDigits(line)!=True){
                             if(checkLabelInCommand(firsStr)!=True){
-                                fprintf(stderr,"The %s is not valid Label in line %d \n",firsStr,lineNumber);
+                                fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,firsStr,lineNumber);
                                 errorCounter++;
                                 break;
                             }
                             if(checkLabelInCommand(line)!=True){
-                                fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,line,lineNumber);
                                 errorCounter++;
                                 break;
                             }
-                            codeNum=instalBinary(codeNum,function[command],command,directAddressing, directAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,directAddressing, directAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
 
                         /* first argu */
-                        codeNum=instalBinary(codeNum,firsStr,0,0,0,R);
-                        addNode(&head, createNodeItem(address++, codeNum));
+                        codeNum=instalBinary(firsStr,0,0,0,R);
+                        addNode(&head, createNodeItem(*IC, codeNum));
                         (*IC)++;
 
                         /* sec argu */
                         if(checkRegister(line)!=ERROR){
                             number=checkRegister(line);
-                            codeNum=instalBinary(codeNum,line,0,0,number,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,number,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         } else if(allDigits(line)!=True){
-                            codeNum=instalBinary(codeNum,line,0,0,0,R);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,0,R);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
@@ -325,61 +580,61 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                         if(command!=cmp && allDigits(line)==True){
                             errorCounter++;
-                            fprintf(stderr,"Undefined operand type name %s in line %d \n",line,lineNumber);
+                            fprintf(stderr,"Error in file %s: Undefined operand type name '%s' in line %d \n",sourceFile,line,lineNumber);
                             break;
                         }
 
                         if(checkRegister(firsStr)!=ERROR || checkRegister(line)!=ERROR){
                             if(checkRegister(firsStr)!=ERROR){
                                 if(allDigits(line)!=True){
-                                    codeNum=instalBinary(codeNum,function[command],command,registerDirectAddressing,directAddressing,A);
-                                    addNode(&head, createNodeItem(address++, codeNum));
+                                    codeNum=instalBinary(function[command],command,registerDirectAddressing,directAddressing,A);
+                                    addNode(&head, createNodeItem(*IC, codeNum));
                                     (*IC)++;
                                 }
 
                                 if(allDigits(line)==True && command==cmp){
-                                    codeNum=instalBinary(codeNum,function[command],command,registerDirectAddressing,immediateAddressing,A);
-                                    addNode(&head, createNodeItem(address++, codeNum));
+                                    codeNum=instalBinary(function[command],command,registerDirectAddressing,immediateAddressing,A);
+                                    addNode(&head, createNodeItem(*IC, codeNum));
                                     (*IC)++;
                                 }
 
                             }else if(checkRegister(line)!=ERROR){
                                 if(allDigits(firsStr)==True){
-                                    codeNum=instalBinary(codeNum,function[command],command,immediateAddressing,registerDirectAddressing,A);
-                                    addNode(&head, createNodeItem(address++, codeNum));
+                                    codeNum=instalBinary(function[command],command,immediateAddressing,registerDirectAddressing,A);
+                                    addNode(&head, createNodeItem(*IC, codeNum));
                                     (*IC)++;
                                 }
 
                                 if(allDigits(firsStr)!=True){
-                                    codeNum=instalBinary(codeNum,function[command],command,directAddressing,registerDirectAddressing,A);
-                                    addNode(&head, createNodeItem(address++, codeNum));
+                                    codeNum=instalBinary(function[command],command,directAddressing,registerDirectAddressing,A);
+                                    addNode(&head, createNodeItem(*IC, codeNum));
                                     (*IC)++;
                                 }
                             }
 
                         }else if(allDigits(firsStr)==True && checkRegister(firsStr)==ERROR && checkRegister(line)==ERROR){
                             if(allDigits(line)!=True){
-                                codeNum=instalBinary(codeNum,function[command],command,immediateAddressing,directAddressing,A);
-                                addNode(&head, createNodeItem(address++, codeNum));
+                                codeNum=instalBinary(function[command],command,immediateAddressing,directAddressing,A);
+                                addNode(&head, createNodeItem(*IC, codeNum));
                                 (*IC)++;
                             }
 
                             if(allDigits(line)==True && command==cmp){
-                                codeNum=instalBinary(codeNum,function[command],command,immediateAddressing,immediateAddressing,A);
-                                addNode(&head, createNodeItem(address++, codeNum));
+                                codeNum=instalBinary(function[command],command,immediateAddressing,immediateAddressing,A);
+                                addNode(&head, createNodeItem(*IC, codeNum));
                                 (*IC)++;
                             }
 
                         }else if(allDigits(firsStr)!=True && checkRegister(firsStr)==ERROR && checkRegister(line)==ERROR){
                             if(allDigits(line)!=True) {
-                                codeNum = instalBinary(codeNum, function[command], command, directAddressing,directAddressing,A);
-                                addNode(&head, createNodeItem(address++, codeNum));
+                                codeNum = instalBinary( function[command], command, directAddressing,directAddressing,A);
+                                addNode(&head, createNodeItem(*IC, codeNum));
                                 (*IC)++;
                             }
 
                             if(allDigits(line)==True && command==cmp){
-                                codeNum=instalBinary(codeNum,function[command],command,directAddressing,immediateAddressing,A);
-                                addNode(&head, createNodeItem(address++, codeNum));
+                                codeNum=instalBinary(function[command],command,directAddressing,immediateAddressing,A);
+                                addNode(&head, createNodeItem(*IC, codeNum));
                                 (*IC)++;
                             }
                         }
@@ -390,67 +645,67 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
                             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
                                 if(number<0){
-                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                    fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too small\n",sourceFile,lineNumber,number);
                                 }else{
-                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                    fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too big\n",sourceFile,lineNumber,number);
                                 }
                                 index++;
                                 errorCounter++;
                                 break;
                             }
 
-                            codeNum=instalBinary(codeNum,firsStr,number,0,0,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(firsStr,number,0,0,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         } else if(checkRegister(firsStr)!=ERROR){
                             number= checkRegister(firsStr);
-                            codeNum=instalBinary(codeNum,firsStr,0,number,0,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(firsStr,0,number,0,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         } else {
                             if(checkLabelInCommand(firsStr)!=True){
-                                fprintf(stderr,"The %s is not valid Label in line %d \n",firsStr,lineNumber);
+                                fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,firsStr,lineNumber);
                                 errorCounter++;
                                 break;
                             }
 
-                            codeNum=instalBinary(codeNum,firsStr,0,0,0,R);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(firsStr,0,0,0,R);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
                         /* sec argu */
                          if(checkRegister(line)!=ERROR){
                              number=checkRegister(line);
-                             codeNum=instalBinary(codeNum,line,0,0,number,A);
-                             addNode(&head, createNodeItem(address++, codeNum));
+                             codeNum=instalBinary(line,0,0,number,A);
+                             addNode(&head, createNodeItem(*IC, codeNum));
                              (*IC)++;
                         } else if(allDigits(line)!=True){
                              if(checkLabelInCommand(line)!=True){
-                                 fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,line,lineNumber);
                                  errorCounter++;
                                  break;
                              }
 
-                            codeNum=instalBinary(codeNum,line,0,0,0,R);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,0,R);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         } else if(command==cmp && allDigits(line)==True){
                              number= atoi(firsStr);
 
                              if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
                                  if(number<0){
-                                     fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                     fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too small\n",sourceFile,lineNumber,number);
                                  }else{
-                                     fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                     fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too big\n",sourceFile,lineNumber,number);
                                  }
                                  index++;
                                  errorCounter++;
                                  break;
                              }
 
-                             codeNum=instalBinary(codeNum,line,number,0,0,A);
-                             addNode(&head, createNodeItem(address++, codeNum));
+                             codeNum=instalBinary(line,number,0,0,A);
+                             addNode(&head, createNodeItem(*IC, codeNum));
                              (*IC)++;
                          }
                     }
@@ -459,99 +714,148 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     break;
 
                 case not:case clr:case inc:case dec:case jmp:case bne:case red:case prn:case jsr:
+                    firsStr= strFirstArgu(line);
+                    memmove(line,line+ strlen(firsStr), strlen(line));
 
-                    MISSING_PARAMITER(line[0],lineNumber,errorCounter)
-                    /*EXTRANEOUS_TEXT_AFTER_END_OF_COMMAND(line[3],lineNumber,errorCounter,index)*/
+                    if(line[0]=='\0'){
+                        free(line);
+                        line=NULL;
+                    }
+                    line= ignorSpace(line);
+
+                    if(line!=NULL && line[strlen(line)-1]=='\n'){
+                        line[strlen(line)-1]='\0';
+                    }
+
+                    if( line!=NULL && (line[0]==',' || thereIsSpace(line)|| findComma(line)==True || allDigits(line) ||
+                            allDigits(line)!=True)){
+                        fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line number %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    line= strDup(firsStr);
+                    free(firsStr);
+                    firsStr=NULL;
+
+                    if(line[strlen(line)-1]=='\n'){
+                        line[strlen(line)-1]='\0';
+                    }
+
+                    if(!line[0]){
+                        fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
 
                     if(line[0]=='@'){
-                        UNDEFINED_REGISTER_NUMBER(checkRegister(line),lineNumber,errorCounter)
+                        if(checkRegister(line)==ERROR){
+                            errorCounter++;
+                            fprintf(stderr,"Error in file %s: Undefined register number name '%s' in line %d \n",sourceFile,line,lineNumber);
+                            break;
+                        }
                     }
 
                     if(command!=prn && allDigits(line)==True){
                         errorCounter++;
-                        fprintf(stderr,"Undefined operand type name %s in line %d \n",line,lineNumber);
+                        fprintf(stderr,"Error in file %s: Undefined operand type name '%s' in line %d \n",sourceFile,line,lineNumber);
                         break;
                     }
 
                     if(command==prn){
 
                         if(allDigits(line)==True){
-                            codeNum=instalBinary(codeNum,function[command],command,0,immediateAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,0,immediateAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                             number=atoi(line);
 
                             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
                                 if(number<0){
-                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too small\n",lineNumber,number);
+                                    fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too small\n",sourceFile,lineNumber,number);
                                 }else{
-                                    fprintf(stderr,"Invalid parameter in line %d this number: %d is too big\n",lineNumber,number);
+                                    fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %d is too big\n",sourceFile,lineNumber,number);
                                 }
                                 errorCounter++;
                                 break;
                             }
 
-                            codeNum=instalBinary(codeNum,line,number,0,0,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,number,0,0,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
 
                         } else if(checkRegister(line)!=ERROR){
-                            codeNum=instalBinary(codeNum,function[command],command,0,registerDirectAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,0,registerDirectAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
-                            codeNum=instalBinary(codeNum,line,0,0,checkRegister(line),A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,checkRegister(line),A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
 
                         } else{
 
                             if(checkLabelInCommand(line)!=True){
-                                fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,line,lineNumber);
                                 errorCounter++;
                                 break;
                             }
 
-                            codeNum=instalBinary(codeNum,function[command],command,0,directAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,0,directAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
 
-                            codeNum=instalBinary(codeNum,line,0,0,0,R);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,0,R);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
 
                     }else{
 
                          if(checkRegister(line)!=ERROR){
-                            codeNum=instalBinary(codeNum,function[command],command,0,registerDirectAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,0,registerDirectAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
-                            codeNum=instalBinary(codeNum,line,0,0,checkRegister(line),A);
-                             addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,checkRegister(line),A);
+                             addNode(&head, createNodeItem(*IC, codeNum));
                              (*IC)++;
 
                         } else if(allDigits(line)!=True){
 
                              if(checkLabelInCommand(line)!=True){
-                                 fprintf(stderr,"The %s is not valid Label in line %d \n",line,lineNumber);
+                                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,line,lineNumber);
                                  errorCounter++;
                                  break;
                              }
 
-                            codeNum=instalBinary(codeNum,function[command],command,0,directAddressing,A);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(function[command],command,0,directAddressing,A);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
-                            codeNum=instalBinary(codeNum,line,0,0,0,R);
-                            addNode(&head, createNodeItem(address++, codeNum));
+                            codeNum=instalBinary(line,0,0,0,R);
+                            addNode(&head, createNodeItem(*IC, codeNum));
                             (*IC)++;
                         }
                     }
                     break;
 
                 case rts:case stop:
-                    EXTRANEOUS_TEXT_AFTER_END_OF_COMMAND(line[0],lineNumber,errorCounter,c)
-                    codeNum=instalBinary(codeNum,function[command],command,0,0,A);
-                    addNode(&head, createNodeItem(address++, codeNum));
+                    if(line[strlen(line)-1]=='\n'){
+                        line[strlen(line)-1]='\0';
+                    }
+
+                    if(thereIsSpace(line)==True){
+                        fprintf(stderr,"Error in file %s: The '%s' is not valid parameter can not be with spaces in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    if(line[0]){
+                        fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
+                        errorCounter++;
+                        break;
+                    }
+
+                    codeNum=instalBinary(function[command],command,0,0,A);
+                    addNode(&head, createNodeItem(*IC, codeNum));
                     (*IC)++;
                     break;
 
@@ -561,7 +865,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
         } else {
             firsStr=labelName(line);
             errorCounter++;
-            fprintf(stderr,"Undefined command name %s in line %d \n",firsStr,lineNumber);
+            fprintf(stderr,"Error in file %s: Undefined command name '%s' in line %d \n",sourceFile,firsStr,lineNumber);
             free(firsStr);
             firsStr=NULL;
             linestr=linestr->next;
@@ -601,13 +905,13 @@ int commandType(char *str){
     return ERROR;
 }
 
-Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE){
+Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE){
     int i;
     Operand *tmp=NULL;
     tmp= malloc(sizeof (Operand));
     if(tmp==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
     tmp->lableName= strDup(name);
 
@@ -615,8 +919,8 @@ Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int 
         tmp->operandStucter.directiveSentence= malloc(sizeof (DirectiveSentence));
 
         if(tmp->operandStucter.directiveSentence==NULL){
-            printf(" Failed to allocate memory.\n");
-            exit(0);
+            printf("Error: Failed to allocate memory.\n");
+            exit(EXIT_FAILURE);
         }
 
         tmp->operandStucter.directiveSentence->directive=opcode;
@@ -625,8 +929,8 @@ Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int 
         tmp->operandStucter.first= malloc(sizeof (firstOp));
 
         if(tmp->operandStucter.first==NULL){
-            printf(" Failed to allocate memory.\n");
-            exit(0);
+            printf("Error: Failed to allocate memory.\n");
+            exit(EXIT_FAILURE);
         }
 
          if(i>=mov && i<=lea){
@@ -653,8 +957,8 @@ Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int 
         tmp->operandStucter.immediate= malloc(sizeof (DirectImmediate));
 
         if(tmp->operandStucter.immediate==NULL){
-            printf(" Failed to allocate memory.\n");
-            exit(0);
+            printf("Error: Failed to allocate memory.\n");
+            exit(EXIT_FAILURE);
         }
 
         tmp->operandStucter.immediate->ARE=ARE;
@@ -663,8 +967,8 @@ Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int 
          tmp->operandStucter.registerAddress= malloc(sizeof (registerDirectAddressing));
 
          if(tmp->operandStucter.registerAddress==NULL){
-             printf(" Failed to allocate memory.\n");
-             exit(0);
+             printf("Error: Failed to allocate memory.\n");
+             exit(EXIT_FAILURE);
          }
 
          tmp->operandStucter.registerAddress->ARE=ARE;
@@ -675,8 +979,8 @@ Operand *instalBinary(Operand *temp,char *name,unsigned int opcode,unsigned int 
         tmp->operandStucter.address= malloc(sizeof (DirectAddress));
 
         if(tmp->operandStucter.address==NULL){
-            printf(" Failed to allocate memory.\n");
-            exit(0);
+            printf("Error: Failed to allocate memory.\n");
+            exit(EXIT_FAILURE);
         }
 
         tmp->operandStucter.address->ARE=ARE;
@@ -747,8 +1051,8 @@ char *labelName(char *str){
             temp=(char *) malloc(sizeof (char ) *(i+2));
 
             if(temp==NULL){
-                printf(" Failed to allocate memory.\n");
-                exit(0);
+                printf("Error: Failed to allocate memory.\n");
+                exit(EXIT_FAILURE);
             }
 
             strncpy(temp,str,i+1);
@@ -759,8 +1063,8 @@ char *labelName(char *str){
             temp=(char *) malloc(sizeof (char ) *(i+2));
 
             if(temp==NULL){
-                printf(" Failed to allocate memory.\n");
-                exit(0);
+                printf("Error: Failed to allocate memory.\n");
+                exit(EXIT_FAILURE);
             }
 
             strncpy(temp,str,i+1);
@@ -774,7 +1078,7 @@ char *labelName(char *str){
 }
 
 int checkLabelInCommand(char *str){
-    int i; /*8**/
+    int i;
 
     if(!isalpha(str[0])){
         return False;

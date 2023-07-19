@@ -18,16 +18,16 @@ mcro *initMcroTable(void){
     mcro *macroTable=malloc(sizeof(mcro));
 
     if (macroTable == NULL) {
-        fprintf(stderr, "\n Error: Failed to allocate memory for macro table.\n");
-        return NULL;
+        printf("Error: Failed to allocate memory for macro table.\n");
+        exit(EXIT_FAILURE);
     }
 
     /* Allocate memory for the entry */
     macroTable->entry=calloc(sizeof(mcroTable),TABLE_SIZE);
     if (macroTable->entry == NULL) {
-        fprintf(stderr, "\n Error: Failed to allocate memory for macro table entries.\n");
+        printf("Error: Failed to allocate memory for macro table entries.\n");
         free(macroTable);
-        return NULL;
+        exit(EXIT_FAILURE);
     }
 
     return macroTable;
@@ -83,8 +83,8 @@ mcroTable *mcroTableInstall(const char *McroName,const char *McroContent){
     mcroTable *newEntry=malloc(sizeof(mcroTable));
 
     if (newEntry == NULL) {
-        fprintf(stderr, "\nError: Failed to allocate memory for macro table entry.\n");
-        return NULL;
+        printf("Error: Failed to allocate memory for macro table entry.\n");
+        exit(EXIT_FAILURE);
     }
 
     newEntry->mcroName = strDup(McroName);
@@ -94,12 +94,12 @@ mcroTable *mcroTableInstall(const char *McroName,const char *McroContent){
     return newEntry;
 }
 
-void freeMcroTable(mcro *macroTable){
+void freeMcroTable(mcro *macro){
     int i;
-    mcroTable *temp,*prev;
+    mcroTable *temp=NULL,*prev=NULL;
 
     for(i=0;i<TABLE_SIZE;i++){
-        temp=macroTable->entry[i];
+        temp=macro->entry[i];
 
         while(temp!=NULL){
             prev=temp;
@@ -111,8 +111,8 @@ void freeMcroTable(mcro *macroTable){
 
     }
 
-    free(macroTable->entry);
-    free(macroTable);
+    free(macro->entry);
+    free(macro);
 }
 
 symbolTable *initSymbolTable(void){
@@ -120,17 +120,17 @@ symbolTable *initSymbolTable(void){
     symbolTable *symbolTable=malloc(sizeof(symbolTable));
 
     if (symbolTable == NULL) {
-        fprintf(stderr, "\nError: Failed to allocate memory for symbol table.\n");
-        return NULL;
+        printf("Error: Failed to allocate memory for symbol table.\n");
+        exit(EXIT_FAILURE);
     }
 
     /* Allocate memory for the entries */
     symbolTable->entry=calloc(sizeof(symbolTableStart),TABLE_SIZE);
 
     if (symbolTable->entry == NULL) {
-        fprintf(stderr, "\n Error: Failed to allocate memory for symbol table entries.\n");
+        printf("Error: Failed to allocate memory for symbol table entries.\n");
         free(symbolTable);
-        return NULL;
+        exit(EXIT_FAILURE);
     }
 
     return symbolTable;
@@ -172,6 +172,11 @@ symbolTableStart *symbolTableInsall(char *symbolName,int addressSymbol,int symbo
     /* Allocate memory for the symbolTable */
     symbolTableStart *newEntry=malloc(sizeof(symbolTableStart));
 
+    if (newEntry == NULL) {
+        printf("Error: Failed to allocate memory for symbol table.\n");
+        exit(EXIT_FAILURE);
+    }
+
     /* Get the value of the key & the data. */
     newEntry->symbolName = strDup(symbolName);
     newEntry->symbolLoc = addressSymbol;
@@ -206,7 +211,7 @@ int symbolTableLockUpAddress(symbolTable *symbolTable,char *symbolName){
 
     while (temp != NULL) {
         /* return value if found */
-        if (strcmp(temp->symbolName, symbolName) == 0 && temp->symbolType==NoEntryOrExtern) {
+        if (strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sIC || temp->symbolType==sDC)) {
             tmp=temp->symbolLoc;
             return tmp;
         }
@@ -214,7 +219,7 @@ int symbolTableLockUpAddress(symbolTable *symbolTable,char *symbolName){
     }
 
     /* reaching here means there were >= 1 entries but no key match */
-    return -2;
+    return ERROR;
 }
 
 int symbolTableLockUpType(symbolTable *symbolTable,char *symbolName){
@@ -230,6 +235,27 @@ int symbolTableLockUpType(symbolTable *symbolTable,char *symbolName){
 
         } else if(strcmp(temp->symbolName, symbolName) == 0 && temp->symbolType==sENTRY){
             return sENTRY;
+        } else if( strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sDC || temp->symbolType==sIC)){
+             return temp->symbolType;
+         }
+        temp = temp->next;
+    }
+
+    /* reaching here means there were >= 1 entries but no key match */
+    return ERROR;
+
+}
+
+int symbolTableLockUpICDC(symbolTable *symbolTable,char *symbolName){
+    unsigned int index = hash(symbolName);
+
+
+    symbolTableStart *temp = symbolTable->entry[index];
+
+    while (temp != NULL) {
+        /* return value if found */
+         if( strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sDC || temp->symbolType==sIC)){
+            return temp->symbolType;
         }
         temp = temp->next;
     }
@@ -256,4 +282,3 @@ void freeSymbolTable(symbolTable *symbolTable){
     free(symbolTable->entry);
     free(symbolTable);
 }
-

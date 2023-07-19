@@ -3,6 +3,10 @@
 char* ignorSpace(char *str){
     int i=0;
 
+    if(str==NULL){
+        return str;
+    }
+
     while((str[i]==' ' || str[i]=='\t') && str[i]!='\0'){
         i++;
     }
@@ -44,11 +48,11 @@ char *strFirstArgu(char *str){
     temp=(char*) malloc(sizeof (char ) * strlen(str));
 
     if(temp==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
-    while(str[i]!=',' && str[i]!='\0'){
+    while(str[i]!=',' && str[i]!='\0' &&str[i]!=' '){
         i++;
     }
     strncpy(temp,str,i);
@@ -62,8 +66,8 @@ char *allocateStr(char *strFirst, char* strSec){
     str=(char *)malloc(strlen(strFirst)+strlen(strSec)+2);
 
     if(str==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strcpy(str, strFirst);
@@ -85,14 +89,31 @@ int allDigits(char *str){
     return True;
 }
 
+int allDigitsForData(char *str){
+    int i=str[0]=='-'?1:0;
+
+    if(!isdigit(str[i])){
+        return i;
+    }
+
+    while(str[i]!='\0' && str[i]!=','){
+        if(!isdigit(str[i])){
+            return i+1;
+        }
+        i++;
+    }
+    return ERROR;
+}
+
 char* strDup(const char* str) {
-    size_t len = strlen(str);
-    char* duplicate = NULL;
-    duplicate=(char*)malloc((len + 1) * sizeof(char));
+    int len = strlen(str);
+    char *duplicate = NULL;
+    len+=2;
+    duplicate=malloc( sizeof(char)*len);
 
     if(duplicate==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strcpy(duplicate, str);
@@ -124,8 +145,8 @@ int getNumberFromData(char *str,int *index){
             temp=(char*)malloc((count+2)*sizeof(char));
 
             if(temp==NULL){
-                printf(" Failed to allocate memory.\n");
-                exit(0);
+                printf("Error: Failed to allocate memory.\n");
+                exit(EXIT_FAILURE);
             }
 
             if(str[count+1]=='\0'){
@@ -141,7 +162,6 @@ int getNumberFromData(char *str,int *index){
             }
         }
         count++;
-
     }
     num=atoi(temp);
     free(temp);
@@ -149,42 +169,61 @@ int getNumberFromData(char *str,int *index){
 }
 
 int checkString(const char *str){
-    int i=0;
+    int i=0,j=0;
     char string[]=".string";
+    /* skip leading whitespace characters*/
+    while (isspace(str[i])){
+        i++;
+    }
 
-    while(i< strlen(string)){
-         if(str[i]!=string[i]){
-             return False;
-         }
-         i++;
+    while(j< strlen(string)){
+        if(str[i]!=string[j]){
+            return False;
+        }
+        i++;
+        j++;
     }
 
     return True;
 }
 
 int checkData(const char *str){
-    int i=0;
+    int i=0,j=0;
     char data[]=".data";
 
-    while(i< strlen(data)){
-        if(str[i]!=data[i]){
+    if(str==NULL){
+        return False;
+    }
+    /* skip leading whitespace characters*/
+    while (isspace(str[i])){
+        i++;
+    }
+
+    while(j< strlen(data)){
+        if(str[i]!=data[j]){
             return False;
         }
         i++;
+        j++;
     }
 
     return True;
 }
 
 int checksExtern(const char *str){
-    int i=0;
+    int i=0,j=0;
     char Extern[]=".extern";
+    /* skip leading whitespace characters*/
+    while (isspace(str[i])){
+        i++;
+    }
 
-    while(i< strlen(Extern)){
-        if(str[i]!=Extern[i]){
+    while(j< strlen(Extern)){
+        if(str[i]!=Extern[j]){
             return False;
         }
         i++;
+        j++;
     }
 
     return True;
@@ -193,7 +232,7 @@ int checksExtern(const char *str){
 int checksEntry(const char *str){
     int i=0,j=0;
     char Entry[]=".entry";
-
+    /* skip leading whitespace characters*/
     while (isspace(str[i])){
         i++;
     }
@@ -209,43 +248,32 @@ int checksEntry(const char *str){
     return True;
 }
 
-lineStr* createNodeLine(char *line){
-    lineStr *node = (lineStr*)malloc(sizeof(lineStr)); /* allocates memory for the node */
+int findComma(char *str){
+    int i=0;
 
-    if (node==NULL){
-        printf(" Error: unable to allocate memory for new node\n");
-        return NULL;
-    }
+    while (i< strlen(str)){
+        if(isdigit(str[i])){
+            i++;
 
-    /* Set the data and next pointer of the node */
-    node->lineStr= strDup(line);
-    node->next = NULL;
-    return node;
-}
+            if(isdigit(str[i]) || isalpha(str[i])){
+                continue;
+            }
 
-void addNodeLine(lineStr **head, lineStr *nodeItem){
-    if (*head==NULL){
-        *head = nodeItem;
-        nodeItem->next = NULL;
-    }else{/* If the linked list already exists */
-        lineStr *current = *head; /*Create a current pointer to traverse the list */
+            while (i<strlen(str)){
+                if(str[i]==',' || str[i]=='\n' || str[i]=='\0'){
+                    break;
+                } else if((isdigit(str[i]) || isalpha(str[i]))){
+                    return False;
+                }
+                i++;
+            }
 
-        /* Find the last node in the circular list */
-        while(current->next!=NULL) {
-            current = current->next;
         }
-        current->next = nodeItem; /* Set the new node as the next node of the last node */
-        nodeItem->next = NULL; /* Maintain the circular list by setting the next pointer of the new node to the head */
-    }
-}
 
-void freeListNodeLine(lineStr *head){
-    lineStr *temp=NULL;
-
-    while(head!=NULL){
-        temp=head->next;
-        free(head->lineStr);
-        free(head);
-        head=temp;
+        if(str[i]=='-' && str[i+1]==' '){
+            return False;
+        }
+        i++;
     }
+    return True;
 }

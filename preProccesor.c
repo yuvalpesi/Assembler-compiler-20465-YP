@@ -3,15 +3,15 @@
 int preProccesor(char *inputFileName){
     FILE *inputFile=NULL,*expandFile=NULL;
     char **splitLine=NULL,*mcroName=NULL,*updatedMacro=NULL,*line=NULL,*sourceFile=NULL;
-    int i=0,wordsCounter=0,fileSize=strlen(inputFileName)+4;
+    int i=0,wordsCounter=0,fileSize=strlen(inputFileName)+4,lineNumber=0;
     boolean readMacroFlag= False;
     mcro *macroTable=initMcroTable();
 
     sourceFile=(char*)malloc(fileSize*sizeof(char));
     line=(char*)calloc(MAX_LINE_LENGHT + 2,sizeof(char));
     if(sourceFile == NULL || line==NULL){
-        printf(" Failed to allocate memory.\n");
-        return False;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,inputFileName,strlen(inputFileName)); /* copy to the sourceFile the inputfilename */
@@ -34,6 +34,7 @@ int preProccesor(char *inputFileName){
 
     while(!feof(inputFile) && fgets(line,MAX_LINE_LENGHT+2,inputFile)!=NULL){
         wordsCounter=0;
+        lineNumber++;
         line=ignorSpace(line);
 
         if(line[i]=='\n' || line[i]=='\0' || line[i]==EOF || line[i]==';'){
@@ -48,11 +49,15 @@ int preProccesor(char *inputFileName){
         }else if (strcmp(splitLine[0], "mcro") == 0){
             readMacroFlag = True;
             mcroName=(char *)malloc(sizeof(char)*MCRO_NAME_LENGHT);
+            if(mcroName==NULL){
+                printf("Error: Failed to allocate memory.\n");
+                exit(EXIT_FAILURE);
+            }
             strcpy(mcroName,splitLine[1]);
             if(checkRegister(mcroName)!=ERROR || checksEntry(mcroName)!=False || checksExtern(mcroName)!=False ||
                     checkData(mcroName)!=False || checkString(mcroName)!=False || commandType(mcroName)!=ERROR){
                 remove(sourceFile);
-                fprintf(stderr,"Error: macro name is assembler Reserved Words '%s' \n",mcroName);
+                fprintf(stderr,"Error in file %s.as: macro name is assembler Reserved Words '%s' in line %d\n",inputFileName,mcroName,lineNumber);
                 freeAllSplitString(splitLine,wordsCounter);
                 free(sourceFile);
                 fclose(inputFile);
@@ -66,6 +71,22 @@ int preProccesor(char *inputFileName){
                 }
                 return False;
             }else {
+                if(mcroTableLockUp(macroTable,mcroName)!=NULL){
+                    remove(sourceFile);
+                    fprintf(stderr,"Error in file %s.as: macro name is already in use '%s' in line %d\n",inputFileName,mcroName,lineNumber);
+                    freeAllSplitString(splitLine,wordsCounter);
+                    free(sourceFile);
+                    fclose(inputFile);
+                    fclose(expandFile);
+                    freeMcroTable(macroTable);
+                    if(mcroName!=NULL){
+                        free(mcroName);
+                    }
+                    if(line!=NULL){
+                        free(line);
+                    }
+                    return False;
+                }
                 mcroTableInsert(macroTable, mcroName, "");
             }
 
@@ -107,7 +128,8 @@ char **splitStringLine(char *str,int *counter){
 
     strCopy=(char*)malloc((1+strLength)*(sizeof(char)));
     if(strCopy==NULL){
-        return NULL;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(strCopy,str,strLength+1);
@@ -142,8 +164,9 @@ char **splitStringLine(char *str,int *counter){
     strSce=(char**)malloc((*counter)*(sizeof(char*)));
 
     if(strSce==NULL){
+        printf("Error: Failed to allocate memory.\n");
         free(strCopy);
-        return NULL;
+        exit(EXIT_FAILURE);
     }
 
     i=0;
@@ -169,12 +192,13 @@ char **splitStringLine(char *str,int *counter){
             temp[j]='\0';
             strSce[strI]=(char*)malloc(sizeof(char)*(strlen(temp)+1));
             if(strSce[strI]==NULL){
+                printf("Error: Failed to allocate memory.\n");
                 free(strCopy);
                 for(m=0;m<strI;m++){
                     free(strSce[m]);
                 }
                 free(strSce);
-                return NULL;
+                exit(EXIT_FAILURE);
             }
 
             strcpy(strSce[strI++],temp);

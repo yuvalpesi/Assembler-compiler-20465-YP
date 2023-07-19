@@ -6,13 +6,10 @@
 #define MAX_LINE_LENGHT 80
 #define MCRO_NAME_LENGHT 15
 #define MAX_LABLE 31
+#define TABLE_SIZE 64
 #define ERROR -1
 #define FUNCTON_NUM 16
 #define WORD_SIZE 12
 #define ADDRESS_START 100
 #define WOLD_NUMBER_MAX_SIZE 511
 #define WOLD_NUMBER_LOW_SIZE (-512)
-
-
-
-

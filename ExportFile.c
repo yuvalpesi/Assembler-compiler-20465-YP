@@ -10,8 +10,8 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
     sourceFile=(char*)malloc(fileSize+4 * sizeof(char));
     base64Data=malloc(sizeof (char)*(WORD_SIZE+1));
     if(sourceFile == NULL || base64Data==NULL){
-        printf(" Failed to allocate memory.\n");
-        return;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,argv,strlen(argv));
@@ -32,6 +32,10 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
             free(base64Data);
             base64Data=NULL;
             base64Data= malloc(WORD_SIZE+1*sizeof(char));
+            if(base64Data==NULL){
+                printf("Error: Failed to allocate memory.\n");
+                exit(EXIT_FAILURE);
+            }
             base64Data[0]='\0';
         }
 
@@ -150,8 +154,8 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
     sourceFile=(char*)malloc(fileSize+4 * sizeof(char));
 
     if(sourceFile == NULL){
-        printf(" Failed to allocate memory.\n");
-        return;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,argv,strlen(argv));
@@ -168,7 +172,7 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
     fprintf(fd,"           IC=%d , DC=%d   ",IC,DC);
 
     while (current!=NULL){
-        fprintf(fd,"\n0%d       ",current->address);
+        fprintf(fd,"\n0%d       ",(current->address+100));
 
         if(strcmp(current->Binary->lableName,".string")==0 || strcmp(current->Binary->lableName,".data")==0){
             for (i = 11; i >= 0; i--) {
@@ -239,16 +243,16 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
     free(sourceFile);
 }
 
-void printEntFile(char *argv,LineHolder *head){
+void printEntFile(char *argv,EnExNode *head){
     FILE *fd=NULL;
     char *sourceFile=NULL;
-    LineHolder *current=head;
+    EnExNode *current=head;
 
     sourceFile=(char*)malloc((strlen(argv)+4) * sizeof(char));
 
     if(sourceFile == NULL){
-        printf(" Failed to allocate memory.\n");
-        return;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,argv,strlen(argv));
@@ -263,7 +267,7 @@ void printEntFile(char *argv,LineHolder *head){
     }
 
     while (current!=NULL){
-        fprintf(fd,"%s       %d\n",current->Binary->lableName,current->address);
+        fprintf(fd,"%s       %d\n",current->lineStr,current->address);
         current=current->next;
     }
 
@@ -271,16 +275,16 @@ void printEntFile(char *argv,LineHolder *head){
     free(sourceFile);
 }
 
-void printExtFile(char *argv,LineHolder *head){
+void printExtFile(char *argv,EnExNode *head){
     FILE *fd=NULL;
     char *sourceFile=NULL;
-    LineHolder *current=head;
+    EnExNode *current=head;
 
     sourceFile=(char*)malloc((strlen(argv)+4) * sizeof(char));
 
     if(sourceFile == NULL){
-        printf(" Failed to allocate memory.\n");
-        return;
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(sourceFile,argv,strlen(argv));
@@ -295,7 +299,7 @@ void printExtFile(char *argv,LineHolder *head){
     }
 
     while (current!=NULL){
-        fprintf(fd,"%s       %d\n",current->Binary->lableName,current->address);
+        fprintf(fd,"%s       %d\n",current->lineStr,current->address);
         current=current->next;
     }
 
@@ -313,8 +317,8 @@ char *binaryToBase64(const char *binary){
     base64= malloc(sizeof(char)*sizeOfBase64);
 
     if(first==NULL || sec==NULL || base64==NULL){
-        printf(" Failed to allocate memory.\n");
-        exit(0);
+        printf("Error: Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
     }
 
     strncpy(first,binary,halfWord);

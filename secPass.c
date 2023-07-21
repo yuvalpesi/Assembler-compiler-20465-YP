@@ -50,7 +50,10 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
     if(checkEntry(argv,symbol,&Henty,IC)==ERROR){
         freeListNodeEnEx(Henty);
         return False;
-    }else if(checkEntry(argv,symbol,&Henty,IC)==True){
+    }
+    freeListNodeEnEx(Henty);
+    Henty=NULL;
+    if(checkEntry(argv,symbol,&Henty,IC)==True){
         printEntFile(argv,Henty);
     }
 

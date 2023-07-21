@@ -167,6 +167,10 @@ void addNodeEnEx(EnExNode **head, EnExNode *nodeItem){
 void freeListNodeEnEx(EnExNode *head){
     EnExNode *temp=NULL;
 
+    if(head==NULL){
+        return;
+    }
+
     while(head!=NULL){
         temp=head->next;
         free(head->lineStr);

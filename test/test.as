@@ -1,4 +1,4 @@
-; leaks --atExit --list  -- ./assembler ./test/test
+;   ./assembler ./test/test
 
 
 

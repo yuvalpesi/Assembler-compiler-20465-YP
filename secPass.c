@@ -10,34 +10,38 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
 
     while (head!=NULL){
 
-            if(checkString(head->Binary->lableName)!=False || checkData(head->Binary->lableName)!=False){
-                head->address+=IC;
-            }
-            lableName=symbolTableLockUp(symbol,head->Binary->lableName);
+        if(checkString(head->Binary->lableName)!=False || checkData(head->Binary->lableName)!=False){
+            head->address+=IC;
+        }
+        if(symbolTableLockUp(symbol,head->Binary->lableName)!=NULL){
+            lableName= strDup(symbolTableLockUp(symbol,head->Binary->lableName));
+        }
 
-            if(lableName==NULL){
-                head=head->next;
-                continue;
-            }
-
-            num=symbolTableLockUpAddress(symbol,lableName);
-
-            if(symbolTableLockUpType(symbol, lableName) == sEXETRN){
-                codeNum=instalBinary(lableName,0,0,0,E);
-                replaceNodeItem(head,lableName,codeNum);
-            }
-
-            if(num!=ERROR && commandType(lableName)==ERROR ){
-                num+=(100);
-                if(symbolTableLockUpICDC(symbol, lableName) == sDC){
-                    num+=IC;
-                }
-
-                codeNum=instalBinary(lableName,num,0,0,R);
-                replaceNodeItem(head,lableName,codeNum);
-            }
-
+        if(lableName==NULL){
             head=head->next;
+            continue;
+        }
+
+        num=symbolTableLockUpAddress(symbol,lableName);
+
+        if(symbolTableLockUpType(symbol, lableName) == sEXETRN){
+            codeNum=instalBinary(lableName,0,0,0,E);
+            replaceNodeItem(head,lableName,codeNum);
+        }
+
+        if(num!=ERROR && commandType(lableName)==ERROR ){
+            num+=(100);
+            if(symbolTableLockUpICDC(symbol, lableName) == sDC){
+                num+=IC;
+            }
+
+            codeNum=instalBinary(lableName,num,0,0,R);
+            replaceNodeItem(head,lableName,codeNum);
+        }
+
+        free(lableName);
+        lableName=NULL;
+        head=head->next;
     }
 
     head=current;
@@ -50,12 +54,15 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
     if(checkEntry(argv,symbol,&Henty,IC)==ERROR){
         freeListNodeEnEx(Henty);
         return False;
+    } else{
+        if(Henty!=NULL){
+            printEntFile(argv,Henty);
+        }
     }
-    freeListNodeEnEx(Henty);
-    Henty=NULL;
-    if(checkEntry(argv,symbol,&Henty,IC)==True){
+
+    /*if(checkEntry(argv,symbol,&Henty,IC)==True){
         printEntFile(argv,Henty);
-    }
+    }*/
 
     if(checkExtern(symbol,&Hextern,head)==True){
         printExtFile(argv,Hextern);
@@ -69,7 +76,7 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
 int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC){
     int i,num,type;
     EnExNode *temp=NULL;
-    char *lableName=NULL;
+    char *labelName=NULL;
 
     for(i=0;i<TABLE_SIZE;i++){
         symbolTableStart *start=table->entry[i];
@@ -80,34 +87,35 @@ int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC){
 
         for (;;){
             type=start->symbolType;
-            lableName= strDup(start->symbolName);
             num= symbolTableLockUpAddress(table,start->symbolName);
 
-            if(symbolTableLockUp(table,lableName)!=NULL && num==ERROR && type==sENTRY){
-                fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,lableName);
+            if(symbolTableLockUp(table,start->symbolName)!=NULL && num==ERROR && type==sENTRY){
+                fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,start->symbolName);
                 freeListNodeEnEx(temp);
                 return ERROR;
             }
 
             if(type==sENTRY && num!=ERROR){
+                labelName= strDup(symbolTableLockUp(table,start->symbolName));
                 num+=(100);
-                if(symbolTableLockUpICDC(table, lableName) == sDC){
+                if(symbolTableLockUpICDC(table, labelName) == sDC){
                     num+=IC;
                 }
+                
+                addNodeEnEx(&temp, createNodeEnEx(labelName, num));
+                
 
-                addNodeEnEx(&temp, createNodeEnEx(lableName, num));
-
+                free(labelName);
+                labelName=NULL;
             }
 
             if(start->next==NULL){
-                free(lableName);
+
                 break;
             }
-            free(lableName);
-            lableName=NULL;
+
             start=start->next;
         }
-
     }
 
     *head=temp;
@@ -131,11 +139,14 @@ int checkExtern(symbolTable *table,EnExNode **head,LineHolder *curr){
         if (symbolTableLockUpType(table, prev->Binary->lableName) == sEXETRN) {
             num=prev->address+100;
 
-            addNodeEnEx(&temp, createNodeEnEx(lableName, num));
+            addNodeEnEx(&temp, createNodeEnEx(prev->Binary->lableName, num));
         }
 
-        free(lableName);
-        lableName=NULL;
+        if(lableName!=NULL){
+            free(lableName);
+            lableName=NULL;
+        }
+
         prev=prev->next;
     }
 

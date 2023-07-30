@@ -89,6 +89,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 fprintf(stderr,"Error in file %s: The '%s' Label too long can not pass 31 chars in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
+                free(labelname);
                 linestr=linestr->next;
                 continue;
             }
@@ -99,6 +100,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
+                free(labelname);
                 linestr=linestr->next;
                 continue;
             }
@@ -107,6 +109,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label (assembly Reserved Words) in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
+                free(labelname);
                 linestr=linestr->next;
                 continue;
             }
@@ -115,6 +118,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,tempToken,lineNumber);
                 errorCounter++;
                 free(tempToken);
+                free(labelname);
                 linestr=linestr->next;
                 continue;
             }
@@ -142,8 +146,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
         if((checkData(line) == True || checkString(line) == True )) {
             if (checkString(line) == True ) {
-                secStr= strDup(line);
-                secStr[8]='\0';
+                secStr= strFirstArgu(line);
                 memmove(line,line+7, strlen(line)+1);
                 line= ignorSpace(line);
 
@@ -151,6 +154,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     line[strlen(line)-1]='\0';
                     fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
                     errorCounter++;
+                    free(secStr);
                     linestr=linestr->next;
                     continue;
                 }
@@ -182,8 +186,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 free(secStr);
                 continue;
             } else if (checkData(line) == True) {
-                secStr= strDup(line);
-                secStr[6]='\0';
+                secStr= strFirstArgu(line);
                 memmove(line,line+5, strlen(line)+1);
                 line= ignorSpace(line);
 
@@ -191,6 +194,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     line[strlen(line)-1]='\0';
                     fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
                     errorCounter++;
+                    free(secStr);
                     linestr=linestr->next;
                     continue;
                 }
@@ -199,6 +203,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     line[strlen(line)-1]='\0';
                     fprintf(stderr,"Error in file %s: Missing comma between the arguments or there is illegal space '%s' line number %d \n",sourceFile,line,lineNumber);
                     errorCounter++;
+                    free(secStr);
                     linestr=linestr->next;
                     continue;
                 }
@@ -209,6 +214,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 if(line[index]==','){
                     fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,line,lineNumber);
                     errorCounter++;
+                    free(secStr);
                     linestr=linestr->next;
                     continue;
                 }
@@ -219,6 +225,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                         if(!line[index]){
                             fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
                             errorCounter++;
+                            free(secStr);
                             index++;
                             continue;
                         }
@@ -227,6 +234,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     if(line[index+1]=='\0'&& !isdigit(line[index])){
                         fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
                         errorCounter++;
+                        free(secStr);
                         index++;
                         continue;
                     }
@@ -236,6 +244,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             index+=allDigitsForData(line);
                             fprintf(stderr,"Error in file %s: Invalid parameter - not a number '%s' in line number %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
+                            free(secStr);
                             while (line[index]!=',')index++;
                             index++;
                             memmove(line,line+index, strlen(line));
@@ -245,12 +254,14 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                         if(!isdigit(line[index-1]) && line[index]=='\0'){
                             fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
+                            free(secStr);
                             break;
                         }
 
                         if(line[index-1]==',' && line[index]==','){
                             fprintf(stderr,"Error in file %s: Multiple consecutive commas '%s' in line number %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
+                            free(secStr);
                             break;
                         }
                         memmove(line,line+index, strlen(line));
@@ -265,6 +276,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             }
                             index++;
                             errorCounter++;
+                            free(secStr);
                             continue;
                         }
 
@@ -413,7 +425,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     continue;
                 }
 
-                symbolTableInsert(table,secStr,0,sENTRY);
+                symbolTableInsert(table,secStr,-1,sENTRY);
                 linestr=linestr->next;
                 free(secStr);
                 continue;

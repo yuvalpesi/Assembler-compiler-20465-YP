@@ -12,9 +12,5 @@ jmp  W
 END:    stop
 STR:    .string "abcdef"
 LENGTH: .data 6,-9,15
-sub  @r2,@r3
-bne END
 K:      .data 22
-sub  @r1,@r0
-prn 6
 .extern L3

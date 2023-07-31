@@ -166,6 +166,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: '%s' is not valid string (missing quotation marks) in line %d \n",sourceFile,line,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
+                    free(secStr);
+                    secStr=NULL;
                     continue;
                 }
                 RemoveQuotationMarks(line);
@@ -184,6 +186,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 }
                 linestr=linestr->next;
                 free(secStr);
+                secStr=NULL;
                 continue;
             } else if (checkData(line) == True) {
                 secStr= strFirstArgu(line);
@@ -225,7 +228,6 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                         if(!line[index]){
                             fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
                             errorCounter++;
-                            free(secStr);
                             index++;
                             continue;
                         }
@@ -234,7 +236,6 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     if(line[index+1]=='\0'&& !isdigit(line[index])){
                         fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
                         errorCounter++;
-                        free(secStr);
                         index++;
                         continue;
                     }
@@ -244,7 +245,6 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             index+=allDigitsForData(line);
                             fprintf(stderr,"Error in file %s: Invalid parameter - not a number '%s' in line number %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
-                            free(secStr);
                             while (line[index]!=',')index++;
                             index++;
                             memmove(line,line+index, strlen(line));
@@ -255,6 +255,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
                             free(secStr);
+                            secStr=NULL;
                             break;
                         }
 
@@ -262,6 +263,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             fprintf(stderr,"Error in file %s: Multiple consecutive commas '%s' in line number %d \n",sourceFile,line,lineNumber);
                             errorCounter++;
                             free(secStr);
+                            secStr=NULL;
                             break;
                         }
                         memmove(line,line+index, strlen(line));
@@ -276,7 +278,6 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             }
                             index++;
                             errorCounter++;
-                            free(secStr);
                             continue;
                         }
 
@@ -308,6 +309,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
+                    free(secStr);
+                    secStr=NULL;
                     continue;
                 }
 
@@ -320,6 +323,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,secStr,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
+                    free(secStr);
+                    secStr=NULL;
                     continue;
                 }
 
@@ -327,6 +332,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: Illegal comma '%s' in line number %d \n",sourceFile,secStr,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
+                    free(secStr);
+                    secStr=NULL;
                     continue;
                 }
 
@@ -349,6 +356,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     if(secStr!=NULL && secStr[0]!=','){
                         errorCounter++;
                         fprintf(stderr,"Error in file %s: Missing comma '%s' in line %d \n",sourceFile,secStr,lineNumber);
+                        free(secStr);
+                        secStr=NULL;
                         break;
                     }
 
@@ -392,6 +401,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: Missing parameter un empty argument in line %d \n",sourceFile,lineNumber);
                     errorCounter++;
                     linestr=linestr->next;
+                    free(secStr);
+                    secStr=NULL;
                     continue;
                 }
 
@@ -403,6 +414,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
                     errorCounter++;
                     free(secStr);
+                    secStr=NULL;
                     linestr=linestr->next;
                     continue;
                 }
@@ -413,6 +425,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
                     errorCounter++;
                     free(secStr);
+                    secStr=NULL;
                     linestr=linestr->next;
                     continue;
                 }
@@ -421,6 +434,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                     fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,secStr,lineNumber);
                     errorCounter++;
                     free(secStr);
+                    secStr=NULL;
                     linestr=linestr->next;
                     continue;
                 }
@@ -428,6 +442,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 symbolTableInsert(table,secStr,-1,sENTRY);
                 linestr=linestr->next;
                 free(secStr);
+                secStr=NULL;
                 continue;
             }
         }
@@ -743,6 +758,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                             allDigits(line)!=True)){
                         fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line number %d \n",sourceFile,line,lineNumber);
                         errorCounter++;
+                        free(firsStr);
+                        firsStr=NULL;
                         break;
                     }
 

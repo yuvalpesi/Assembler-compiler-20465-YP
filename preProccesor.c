@@ -55,7 +55,7 @@ int preProccesor(char *inputFileName){
             }
             strcpy(mcroName,splitLine[1]);
             if(checkRegister(mcroName)!=ERROR || checksEntry(mcroName)!=False || checksExtern(mcroName)!=False ||
-                    checkData(mcroName)!=False || checkString(mcroName)!=False || commandType(mcroName)!=ERROR){
+               checkData(mcroName)!=False || checkString(mcroName)!=False || commandType(mcroName)!=ERROR){
                 remove(sourceFile);
                 fprintf(stderr,"Error in file %s.as: macro name is assembler Reserved Words '%s' in line %d\n",inputFileName,mcroName,lineNumber);
                 freeAllSplitString(splitLine,wordsCounter);
@@ -65,9 +65,11 @@ int preProccesor(char *inputFileName){
                 freeMcroTable(macroTable);
                 if(mcroName!=NULL){
                     free(mcroName);
+                    mcroName=NULL;
                 }
                 if(line!=NULL){
                     free(line);
+                    line=NULL;
                 }
                 return False;
             }else {
@@ -81,9 +83,11 @@ int preProccesor(char *inputFileName){
                     freeMcroTable(macroTable);
                     if(mcroName!=NULL){
                         free(mcroName);
+                        mcroName=NULL;
                     }
                     if(line!=NULL){
                         free(line);
+                        line=NULL;
                     }
                     return False;
                 }
@@ -92,11 +96,16 @@ int preProccesor(char *inputFileName){
 
         }else if (strcmp(splitLine[0], "endmcro") == 0){
             readMacroFlag = False;
+            if(mcroName!=NULL){
+                free(mcroName);
+                mcroName=NULL;
+            }
 
         }else if(readMacroFlag == True){
             updatedMacro=allocateStr(mcroTableLockUp(macroTable,mcroName),line);
             mcroTableInsert(macroTable,mcroName, updatedMacro);
             free(updatedMacro);
+            updatedMacro=NULL;
 
         }else{
             fputs(line,expandFile);

@@ -128,16 +128,17 @@ Error in file ./test/errors.am: The '%ohno' is not valid Label in line 127
 Error in file ./test/errors.am: The '%ohno' is not valid Label in line 128 
 Error in file ./test/errors.am: Undefined operand type name '5' in line 129 
 Error in file ./test/errors.am: The '%ohyes' is not valid Label in line 130 
-Error in file ./test/errors.am: Undefined operand type name '-1' in line 131 
-Error in file ./test/errors.am: Undefined operand type name '-1' in line 132 
-Error in file ./test/errors.am: Undefined operand type name '-1' in line 133 
+Error in file ./test/errors.am: The '#8' is not valid Label in line 131 
+Error in file ./test/errors.am: The '%ohno' is not valid Label in line 133 
 Error in file ./test/errors.am: Undefined operand type name '-1' in line 134 
+Error in file ./test/errors.am: Undefined operand type name '-1' in line 135 
 Error in file ./test/errors.am: The '%ohno' is not valid Label in line 136 
 Error in file ./test/errors.am: The '%ohno' is not valid Label in line 137 
 Error in file ./test/errors.am: Undefined operand type name '@r1' in line 139 
 Error in file ./test/errors.am: Undefined operand type name '@r1' in line 140 
 Error in file ./test/errors.am: Undefined operand type name '@r1' in line 141 
 Error in file ./test/errors.am: Undefined operand type name '@r1' in line 142 
+Error in file ./test/errors.am: Undefined operand type name '-1' in line 143 
 Error in file ./test/errors.am: The '%ohno' is not valid Label in line 144 
 Error in file ./test/errors.am: Undefined operand type name '-1' in line 145 
 Error in file ./test/errors.am: The '%ohno' is not valid Label in line 146 
@@ -160,15 +161,8 @@ Error in file ./test/errors.am: Extraneous text after end of command '-1' in lin
 Error in file ./test/errors.am: Extraneous text after end of command 'someLabel47' in line 163 
 Error in file ./test/errors.am: Extraneous text after end of command '%ohno' in line 164 
 Error in file ./test/errors.am: Extraneous text after end of command '@r1' in line 165 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2)' in line number 166 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 167 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2)' in line number 168 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2)' in line number 169 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2)4' in line number 170 
-Error in file ./test/errors.am: The 'L1()' is not valid Label in line 171 
-Error in file ./test/errors.am: The 'L1(@r1)' is not valid Label in line 172 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2,@r3)' in line number 173 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 174 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 175 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2)' in line number 176 
-Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 177 
+Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 166 
+Error in file ./test/errors.am: The 'L1@r1' is not valid Label in line 168 
+Error in file ./test/errors.am: Extraneous text after end of command ',@r2,@r3' in line number 169 
+Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 170 
+Error in file ./test/errors.am: Extraneous text after end of command ',@r2' in line number 171 

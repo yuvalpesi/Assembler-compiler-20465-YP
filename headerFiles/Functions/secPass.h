@@ -27,7 +27,7 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC);
  * @param IC: The current value of the instruction counter (IC).
  * @return: True if at least one entry is found, False otherwise.
  */
-int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC);
+void checkEntry(char *argv,symbolTable *table,int IC);
 
 /**
  * This function checks the symbol table for symbols marked as external symbols (type sEXETRN) that
@@ -40,5 +40,4 @@ int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC);
  * @param curr: The current LineHolder node being processed.
  * @return: True if at least one external symbol is found, False otherwise.
  */
-int checkExtern(symbolTable *table,EnExNode **head,LineHolder *curr);
-
+void checkExtern(char *argv,symbolTable *table,LineHolder **curr);

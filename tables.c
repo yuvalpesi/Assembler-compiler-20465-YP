@@ -147,7 +147,7 @@ void symbolTableInsert(symbolTable *symbolTable,char *symbolName,int addressSymb
     while (current != NULL) {
         item=current->symbolType;
         if(item==symbolType && strcmp(current->symbolName, symbolName) == 0 ) {
-             /*Match found - Will replace the existing key with new one*/
+            /*Match found - Will replace the existing key with new one*/
             free(current->symbolName);
 
             current->symbolName = strDup(symbolName);
@@ -230,14 +230,14 @@ int symbolTableLockUpType(symbolTable *symbolTable,char *symbolName){
 
     while (temp != NULL) {
         /* return value if found */
-         if(strcmp(temp->symbolName, symbolName) == 0 && temp->symbolType ==sEXETRN){
+        if(strcmp(temp->symbolName, symbolName) == 0 && temp->symbolType ==sEXETRN){
             return sEXETRN;
 
         } else if(strcmp(temp->symbolName, symbolName) == 0 && temp->symbolType==sENTRY){
             return sENTRY;
         } else if( strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sDC || temp->symbolType==sIC)){
-             return temp->symbolType;
-         }
+            return temp->symbolType;
+        }
         temp = temp->next;
     }
 
@@ -254,7 +254,7 @@ int symbolTableLockUpICDC(symbolTable *symbolTable,char *symbolName){
 
     while (temp != NULL) {
         /* return value if found */
-         if( strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sDC || temp->symbolType==sIC)){
+        if( strcmp(temp->symbolName, symbolName) == 0 && (temp->symbolType==sDC || temp->symbolType==sIC)){
             return temp->symbolType;
         }
         temp = temp->next;

@@ -143,10 +143,10 @@ sub %ohno, someLabel47
 sub %ohno, @r3
 sub -1, 5
 sub -1, %ohyes
-lea -1, #8
-lea -1, someLabel47
-lea -1, %ohno
-lea -1, @r4
+lea l, #8
+lea l, @r4
+lea l, %ohno
+lea l, -1
 lea %ohno, -1
 lea %ohno, %ohyes
 lea %ohno, someLabel47
@@ -180,15 +180,9 @@ stop %ohno
 stop @r1
 
 ;jump command errors:
-jmp (@r1,@r2)
-jmp L1(@r1,@r2
-jmp L1@r1,@r2)
-jmp 1L(@r1,@r2)
-jmp L1(@r1,@r2)4
-jmp L1()
-jmp L1(@r1)
-jmp l1(@r1,@r2,@r3)
 jmp @r1,@r2
-jmp L1@r1,@r2
-jmp @r1,@r2)
+jmp L1
+jmp L1@r1
+jmp @r1,@r2,@r3
+jmp @r1,@r2
 clr @r1,@r2

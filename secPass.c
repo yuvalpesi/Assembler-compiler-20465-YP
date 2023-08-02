@@ -2,7 +2,6 @@
 
 int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
     LineHolder *current=head;
-    EnExNode *Hextern=NULL,*Henty=NULL;
     char *lableName=NULL;
     int num;
     Operand *codeNum=NULL;
@@ -51,29 +50,13 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
         return False;
     }
 
-    if(checkEntry(argv,symbol,&Henty,IC)==ERROR){
-        freeListNodeEnEx(Henty);
-        return False;
-    } else{
-        if(Henty!=NULL){
-            printEntFile(argv,Henty);
-        }
-    }
+    checkEntry(argv,symbol,IC);
+    checkExtern(argv,symbol,&head);
 
-    /*if(checkEntry(argv,symbol,&Henty,IC)==True){
-        printEntFile(argv,Henty);
-    }*/
-
-    if(checkExtern(symbol,&Hextern,head)==True){
-        printExtFile(argv,Hextern);
-    }
-
-    freeListNodeEnEx(Henty);
-    freeListNodeEnEx(Hextern);
     return True;
 }
 
-int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC){
+void checkEntry(char *argv,symbolTable *table,int IC){
     int i,num,type;
     EnExNode *temp=NULL;
     char *labelName=NULL;
@@ -92,21 +75,21 @@ int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC){
             if(symbolTableLockUp(table,start->symbolName)!=NULL && num==ERROR && type==sENTRY){
                 fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,start->symbolName);
                 freeListNodeEnEx(temp);
-                return ERROR;
+                return;
             }
 
             if(type==sENTRY && num!=ERROR){
-                labelName= strDup(symbolTableLockUp(table,start->symbolName));
+                if(labelName!=NULL){
+                free(labelName);
+                labelName=NULL;
+            }
+                labelName= strDup(start->symbolName);
                 num+=(100);
                 if(symbolTableLockUpICDC(table, labelName) == sDC){
                     num+=IC;
                 }
-                
-                addNodeEnEx(&temp, createNodeEnEx(labelName, num));
-                
 
-                free(labelName);
-                labelName=NULL;
+                addNodeEnEx(&temp, createNodeEnEx(labelName, num));
             }
 
             if(start->next==NULL){
@@ -118,43 +101,43 @@ int checkEntry(char *argv,symbolTable *table,EnExNode **head,int IC){
         }
     }
 
-    *head=temp;
-    if(*head==NULL){
-        return False;
+    if(temp==NULL){
+        return;
+    }else{
+        printEntFile(argv,temp);
+        freeListNodeEnEx(temp);
+        if(labelName!=NULL)free(labelName);
     }
-    return True;
 }
 
-int checkExtern(symbolTable *table,EnExNode **head,LineHolder *curr){
+void checkExtern(char *argv,symbolTable *table,LineHolder **curr){
     int num;
-    char *lableName=NULL;
-    LineHolder *prev=curr;
+    LineHolder *prev=*curr;
     EnExNode *temp=NULL;
+    char *tempStr=NULL;
 
     while (prev!=NULL){
 
-        lableName=strdup(prev->Binary->lableName);
-
-
         if (symbolTableLockUpType(table, prev->Binary->lableName) == sEXETRN) {
+            if(tempStr!=NULL){
+                free(tempStr);
+                tempStr=NULL;
+            }
+            tempStr= strDup(prev->Binary->lableName);
             num=prev->address+100;
 
-            addNodeEnEx(&temp, createNodeEnEx(prev->Binary->lableName, num));
-        }
-
-        if(lableName!=NULL){
-            free(lableName);
-            lableName=NULL;
+            addNodeEnEx(&temp, createNodeEnEx(tempStr, num));
         }
 
         prev=prev->next;
     }
 
-    *head=temp;
-
-    if(*head==NULL){
-        return False;
+    if(temp==NULL){
+        return;
+    } else{
+        printExtFile(argv,temp);
+        freeListNodeEnEx(temp);
+        if(tempStr!=NULL)free(tempStr);
     }
-    return True;
 }
 

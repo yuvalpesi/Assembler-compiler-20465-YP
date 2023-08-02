@@ -1083,6 +1083,13 @@ void handleString(char *Line, char *sourceFile, int lineNumber, int *errorCounte
     }
     RemoveQuotationMarks(line);
     index=0;
+
+    if(line[index]=='\0'){ /* if it is empty string only add '\0'*/
+        codeNum= instalBinary(secStr,'\0',0,0,0);
+        addNode(head, createNodeItem(*DC, codeNum));
+        (*DC)++;
+    }
+
     while (line[index] != '\0'){/* check char by char and add it to the addressing node */
         c=(unsigned char)line[index];
         codeNum= instalBinary(secStr,c,0,0,0);

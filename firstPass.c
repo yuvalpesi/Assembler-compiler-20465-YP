@@ -76,14 +76,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             strSpace = strlen(labelname);
             memmove(line,line+strSpace, strlen(line)+1); /* remove the label from the line */
             line=ignorSpace(line);
-
-            tempToken=(char *) malloc(strSpace*sizeof (char));
-            if(tempToken==NULL){
-                printf("Error: Failed to allocate memory.\n");
-                exit(1);
-            }
-
-            strcpy(tempToken,labelname);
+            tempToken=strDup(labelname);
 
             if(strlen(tempToken)>MAX_LABLE){
                 fprintf(stderr,"Error in file %s: The '%s' Label too long can not pass 31 chars in line %d \n",sourceFile,tempToken,lineNumber);
@@ -134,11 +127,10 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
             if(commandType(line)!=ERROR){/* see if the label holding a command in the line if yes mark it with IC type*/
                 symbolTableInsert(table,tempToken,*IC,sIC);
-                free(tempToken);
             } else{
                 symbolTableInsert(table,tempToken,*DC,sDC);
-                free(tempToken);
             }
+            free(tempToken);
         }
 
         /* check if after the label there is .entry or .extern and if yes ignore from it */

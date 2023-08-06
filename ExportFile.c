@@ -261,14 +261,15 @@ void printEntFile(char *argv,EnNode *head){
     strcat(sourceFile,".ent");
     sourceFile[strlen(sourceFile)]='\0';
 
-    if((fd=fopen(sourceFile,"w+"))==NULL){
+    if(!(fd=fopen(sourceFile,"w+"))){
         fprintf(stderr, "\n Error: Failed to create the expanded source code file %s. \n", sourceFile);
         free(sourceFile);
         return ;
     }
 
     while (current!=NULL){
-        fprintf(fd,"%s       %d\n",current->lineStr,current->address);
+        fputs(current->lable,fd);
+        fprintf(fd,"      %d\n",current->address);
         current=current->next;
     }
 
@@ -293,14 +294,15 @@ void printExtFile(char *argv,ExNode *head){
     strcat(sourceFile,".ext");
     sourceFile[strlen(sourceFile)]='\0';
 
-    if((fd=fopen(sourceFile,"w+"))==NULL){
+    if(!(fd=fopen(sourceFile,"w+"))){
         fprintf(stderr, "\n Error: Failed to create the expanded source code file %s. \n", sourceFile);
         free(sourceFile);
         return ;
     }
 
     while (current!=NULL){
-        fprintf(fd,"%s       %d\n",current->lineStr,current->address);
+        fputs(current->lable,fd);
+        fprintf(fd,"      %d\n",current->address);
         current=current->next;
     }
 

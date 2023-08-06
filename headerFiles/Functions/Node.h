@@ -1,6 +1,6 @@
 
 /**
- * Structure defining a node in the linked list representing assembly lines.
+ * Structure defining a node in the linked list representing assembly addressing image lines.
  */
 typedef struct Line{
     int address;
@@ -79,20 +79,10 @@ void freeListNodeLine(lineStr *head);
  * Structure defining a node in the linked list representing .entry.
  */
 typedef struct EnNode{
-    char lineStr[MAX_LABLE];
+    char lable[MAX_LABLE];
     int address;
     struct EnNode *next;
 }EnNode;
-
-/**
- * Structure defining a node in the linked list representing .extern.
- */
-typedef struct ExNode{
-    char lineStr[MAX_LABLE];
-    int address;
-    struct ExNode *next;
-}ExNode;
-
 
 /**
  * Creates a new entry node for a lineNode given string name and address.
@@ -101,7 +91,7 @@ typedef struct ExNode{
  * @param address The address number to be stored in the node.
  * @return A pointer to the newly created node, or NULL if memory allocation fails.
  */
-EnNode* createNodeEn(char *line,int address);
+EnNode* createNodeEn(const char *line,int address);
 
 /**
  * Adds a new entry node to a linked list.
@@ -119,13 +109,22 @@ void addNodeEn(EnNode **head, EnNode *nodeItem);
 void freeListNodeEn(EnNode *head);
 
 /**
+ * Structure defining a node in the linked list representing .extern.
+ */
+typedef struct ExNode{
+    char lable[MAX_LABLE];
+    int address;
+    struct ExNode *next;
+}ExNode;
+
+/**
  * Creates a new extern node for a lineNode given string name and address.
  *
  * @param line The string name to be stored in the node.
  * @param address The address number to be stored in the node.
  * @return A pointer to the newly created node, or NULL if memory allocation fails.
  */
-ExNode* createNodeEx(char *line,int address);
+ExNode* createNodeEx(const char *line,int address);
 
 /**
  * Adds a new extern node to a linked list.

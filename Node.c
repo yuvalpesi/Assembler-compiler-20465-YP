@@ -133,7 +133,7 @@ void freeListNodeLine(lineStr *head){
     }
 }
 
-EnNode* createNodeEn(char *line,int address){
+EnNode* createNodeEn(const char *line,int address){
     EnNode *node = (EnNode*)malloc(sizeof(EnNode)); /* allocates memory for the node */
 
     if (node==NULL){
@@ -142,7 +142,7 @@ EnNode* createNodeEn(char *line,int address){
     }
 
     /* Set the data and next pointer of the node */
-    strcpy(node->lineStr,line);
+    strcpy(node->lable,line);
     node->address=address;
     node->next = NULL;
     return node;
@@ -178,7 +178,7 @@ void freeListNodeEn(EnNode *head){
     }
 }
 
-ExNode* createNodeEx(char *line,int address){
+ExNode* createNodeEx(const char *line,int address){
     ExNode *node = (ExNode*)malloc(sizeof(ExNode)); /* allocates memory for the node */
 
     if (node==NULL){
@@ -187,7 +187,7 @@ ExNode* createNodeEx(char *line,int address){
     }
 
     /* Set the data and next pointer of the node */
-    strcpy(node->lineStr,line);
+    strcpy(node->lable,line);
     node->address=address;
     node->next = NULL;
     return node;

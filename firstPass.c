@@ -76,7 +76,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             strSpace = strlen(labelname);
             memmove(line,line+strSpace, strlen(line)+1); /* remove the label from the line */
             line=ignorSpace(line);
-            tempToken=strDup(labelname);
+            tempToken= strDup(labelname);
 
             if(strlen(tempToken)>MAX_LABLE){
                 fprintf(stderr,"Error in file %s: The '%s' Label too long can not pass 31 chars in line %d \n",sourceFile,tempToken,lineNumber);
@@ -127,14 +127,14 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
 
             if(commandType(line)!=ERROR){/* see if the label holding a command in the line if yes mark it with IC type*/
                 symbolTableInsert(table,tempToken,*IC,sIC);
-            } else{
+            }else{
                 symbolTableInsert(table,tempToken,*DC,sDC);
             }
             free(tempToken);
         }
 
         /* check if after the label there is .entry or .extern and if yes ignore from it */
-        if(labelname[strlen(labelname)-1]==':'  && (checksEntry(line+ strlen(labelname))==True ||checksExtern(line+ strlen(labelname))==True)){
+        if(labelname[strlen(labelname)-1]==':'  && (checksEntry(line+ strlen(labelname))==True || checksExtern(line+ strlen(labelname))==True)){
             strSpace = strlen(labelname);
             memmove(line,line+strSpace, strlen(line)+1);
             line=ignorSpace(line);
@@ -146,8 +146,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
             free(labelname);
         }
 
-        /* see if the first argument int the line is .string or .data and analyze it */
-        if((checkData(line) == True || checkString(line) == True )) {
+        /* see if the first argument int the line is .string or .data or .extern or .entry and analyze it */
+        if((checkData(line) == True || checkString(line) == True )){
             if (checkString(line) == True ) {
                 handleString(line,sourceFile,lineNumber,&errorCounter,DC,&head);
                 linestr=linestr->next;
@@ -157,8 +157,8 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
                 linestr=linestr->next;
                 continue;
             }
-        } else if ((checksExtern(line)==True || checksEntry(line)==True) ) {
-            if (checksExtern(line)==True ){
+        }else if((checksExtern(line)==True || checksEntry(line)==True)){
+            if (checksExtern(line)==True){
                 handleExtern(line,sourceFile,lineNumber,&errorCounter,&head,table);
                 linestr=linestr->next;
                 continue;
@@ -252,7 +252,7 @@ Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigne
         exit(EXIT_FAILURE);
     }
     tmp->lableName= strDup(name);
-
+    /* get inside to the right bit-filed directives and allocate memory and set all the info */
     if((checkData(name) == True || checkString(name) == True) || (checksExtern(name)==True || checksEntry(name)==True)){
         tmp->operandStucter.directiveSentence= malloc(sizeof (DirectiveSentence));
 
@@ -273,16 +273,16 @@ Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigne
 
         if(i>=mov && i<=lea){
             tmp->operandStucter.first->ARE=ARE;
-            tmp->operandStucter.first->targetOperand=target; /* need to get from the function */
+            tmp->operandStucter.first->targetOperand=target;
             tmp->operandStucter.first->opcode=i;
-            tmp->operandStucter.first->sourceOperand=source; /* need to get from the function */
+            tmp->operandStucter.first->sourceOperand=source;
 
         }
         if(i>=not && i<=jsr){
             tmp->operandStucter.first->ARE=ARE;
             tmp->operandStucter.first->targetOperand=target;
             tmp->operandStucter.first->opcode=i;
-            tmp->operandStucter.first->sourceOperand=source; /* need to get from the function */
+            tmp->operandStucter.first->sourceOperand=source;
 
         }
         if(i==rts || i==stop){
@@ -728,7 +728,6 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
             (*IC)++;
         }
 
-
         /* first operand opcode argument */
         codeNum=instalBinary(firsStr,0,0,0,R);
         addNode(head, createNodeItem(*IC, codeNum));
@@ -1010,7 +1009,6 @@ void handleEntry(char *Line, char *sourceFile, int lineNumber, int *errorCounter
 
     if(thereIsSpace(secStr)==True){
         fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
-        errorCounter++;
         free(secStr);
         free(line);
         (*errorCounter)++;
@@ -1030,7 +1028,6 @@ void handleEntry(char *Line, char *sourceFile, int lineNumber, int *errorCounter
 
     if((symbolTableLockUpType(table,secStr)==sENTRY || symbolTableLockUpType(table,secStr)==sEXETRN)){
         fprintf(stderr,"Error in file %s: The '%s' is not valid Label (already use) in line %d \n",sourceFile,secStr,lineNumber);
-        errorCounter++;
         free(secStr);
         free(line);
         (*errorCounter)++;
@@ -1075,13 +1072,11 @@ void handleString(char *Line, char *sourceFile, int lineNumber, int *errorCounte
     }
     RemoveQuotationMarks(line);
     index=0;
-
-    if(line[index]=='\0'){ /* if it is empty string only add '\0'*/
+    if(line[index]=='\0'){
         codeNum= instalBinary(secStr,'\0',0,0,0);
         addNode(head, createNodeItem(*DC, codeNum));
         (*DC)++;
     }
-
     while (line[index] != '\0'){/* check char by char and add it to the addressing node */
         c=(unsigned char)line[index];
         codeNum= instalBinary(secStr,c,0,0,0);
@@ -1200,7 +1195,6 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
 
             continue;
         }
-
         index++;
     }
 

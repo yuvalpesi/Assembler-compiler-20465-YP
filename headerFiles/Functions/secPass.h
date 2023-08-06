@@ -18,14 +18,16 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC,ExNod
  * This function checks the symbol table for symbols marked as entry symbols (type sENTRY) and
  * creates a linked list of entries with their corresponding addresses. The linked list is
  * represented by the LineHolder structure. The address of each entry is calculated based on the
- * symbol's address in the symbol table and the value of IC. The function returns True if at least
- * one entry is found, and False otherwise.
+ * symbol's address in the symbol table and the value of IC. The function returns Entry linked node if at least
+ * one entry is found, and NULL otherwise.
+ * if the function find a entry that not in use it return error and add to the error flag one
  *
+ * @param Entry: A entry linked list pointer.
  * @param argv: A pointer to the file name.
  * @param table: The symbol table.
  * @param head: A pointer to the head of the LineHolder linked list (output parameter).
  * @param IC: The current value of the instruction counter (IC).
- * @return: True if at least one entry is found, False otherwise.
+ * @param errorsCounter: An errors counter flag
  */
 void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsCounter);
 
@@ -33,11 +35,12 @@ void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsC
  * This function checks the symbol table for symbols marked as external symbols (type sEXETRN) that
  * are referenced in the given LineHolder linked list. It creates a linked list of externals with
  * their corresponding addresses. The linked list is represented by the LineHolder structure. The
- * function returns True if at least one external symbol is found, and False otherwise.
+ * function returns Extern linked node if at least one external symbol is found, and NULL otherwise.
+ * if the error flag is not 0 it will return empty extern node
  *
+ * @param Extern: A extern linked list pointer.
  * @param table: The symbol table.
- * @param head: A pointer to the head of the LineHolder linked list for externals (output parameter).
  * @param curr: The current LineHolder node being processed.
- * @return: True if at least one external symbol is found, False otherwise.
+ * @param errorsCounter: An errors counter flag
  */
-void checkExtern(ExNode **Extern,char *argv,symbolTable *table,LineHolder **curr,int errorsCounter);
+void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr,int errorsCounter);

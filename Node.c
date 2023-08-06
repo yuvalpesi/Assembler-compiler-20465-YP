@@ -56,9 +56,7 @@ void addNode(LineHolder **head, LineHolder *nodeItem){
                     nodeItem->next = current; /* connect the rest of the node */
                 }
             }
-
         }
-
     }
 }
 
@@ -67,7 +65,7 @@ void replaceNodeItem(LineHolder * head, char *item, Operand *code) {
 
     while (current != NULL) {
         if (strcmp(current->Binary->lableName,item)==0) {
-            freeBinery(current->Binary);
+            freeBinary(current->Binary); /* free all the binary struct */
             free(current->Binary->lableName);
             free(current->Binary);
             current->Binary = code;
@@ -82,7 +80,7 @@ void freeListNode(LineHolder *head){
 
     while(head!=NULL){
         temp=head->next;
-        freeBinery(head->Binary); /* free all the binary struct */
+        freeBinary(head->Binary); /* free all the binary struct */
         free(head->Binary->lableName);
         free(head->Binary);
         free(head);

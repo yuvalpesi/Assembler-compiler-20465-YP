@@ -75,7 +75,7 @@ int commandType(char *str);
  * @param ARE: The ARE value.
  * @return: A pointer to the installed Operand structure.
  */
-Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE);
+Operand *installBinary(char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE);
 
 /**
  * This function frees the memory allocated for an Operand structure and its corresponding fields.
@@ -83,7 +83,7 @@ Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigne
  *
  * @param temp: A pointer to the Operand structure to be freed.
  */
-void freeBinery(Operand *temp);
+void freeBinary(Operand *temp);
 
 /**
  * Determines the register type based on the given string.

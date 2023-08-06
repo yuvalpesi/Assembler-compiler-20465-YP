@@ -172,7 +172,7 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
         line=ignorSpace(line);
         command = commandType(line);/* find command type*/
 
-        if (command != ERROR) {
+        if(command != ERROR){
             memmove(line,line+strlen(function[command]), strlen(line)+1);
             line= ignorSpace(line);
 
@@ -243,7 +243,7 @@ int commandType(char *str){
     return ERROR;
 }
 
-Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE){
+Operand *installBinary(char *name,unsigned int opcode,unsigned int source,unsigned int target,unsigned int ARE){
     int i;
     Operand *tmp=NULL;
     tmp= malloc(sizeof (Operand));
@@ -287,9 +287,9 @@ Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigne
         }
         if(i==rts || i==stop){
             tmp->operandStucter.first->ARE=ARE;
-            tmp->operandStucter.first->targetOperand=0;
+            tmp->operandStucter.first->targetOperand=target;
             tmp->operandStucter.first->opcode=i;
-            tmp->operandStucter.first->sourceOperand=0;
+            tmp->operandStucter.first->sourceOperand=source;
         }
     } else if(allDigits(name)==True ){
         tmp->operandStucter.immediate= malloc(sizeof (DirectImmediate));
@@ -328,7 +328,7 @@ Operand *instalBinary(char *name,unsigned int opcode,unsigned int source,unsigne
     return tmp;
 }
 
-void freeBinery(Operand *temp){
+void freeBinary(Operand *temp){
 
     if((checkData(temp->lableName) == True || checkString(temp->lableName) == True) || (checksExtern(temp->lableName)==True || checksEntry(temp->lableName)==True)) {
         free(temp->operandStucter.directiveSentence);
@@ -429,16 +429,17 @@ void handleNoOperand(int command,char *function, char *line, char *sourceFile, i
         (*errorCounter)++;
         return;
     }
-
-    codeNum=instalBinary(function,command,0,0,A);
+    /* crate the binary operand */
+    codeNum=installBinary(function,command,0,0,A);
+    /* crate and add the new item addressing image linked list node */
     addNode(head, createNodeItem(*IC, codeNum));
-    (*IC)++;
+    (*IC)++;/* add one to the code image */
 }
 
 void handleOneOperand(int command,char *function, char *Line, char *sourceFile, int lineNumber, int *errorCounter, int* IC, LineHolder **head){
     Operand *codeNum=NULL;
     int number;
-    char *firsStr= strFirstArgu(Line),*line= strDup(Line);
+    char *firsStr= strFirstArgu(Line),*line= strDup(Line);/* set a copy of Line */
 
     memmove(line,line+ strlen(firsStr), strlen(line));
 
@@ -495,10 +496,10 @@ void handleOneOperand(int command,char *function, char *Line, char *sourceFile, 
     if(command==prn){
 
         if(allDigits(line)==True){
-            codeNum=instalBinary(function,command,0,immediateAddressing,A);
+            codeNum=installBinary(function,command,0,immediateAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
-            number=atoi(line);
+            number=atoi(line); /* get the number from the parameter */
 
             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
                 if(number<0){
@@ -511,19 +512,19 @@ void handleOneOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(line,number,0,0,A);
+            codeNum=installBinary(line,number,0,0,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
 
         } else if(checkRegister(line)!=ERROR){
-            codeNum=instalBinary(function,command,0,registerDirectAddressing,A);
+            codeNum=installBinary(function,command,0,registerDirectAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
-            codeNum=instalBinary(line,0,0,checkRegister(line),A);
+            codeNum=installBinary(line,0,0,checkRegister(line),A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
 
-        } else{
+        } else{/* if the parameter is a label */
 
             if(checkLabelInCommand(line)!=True){
                 fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,line,lineNumber);
@@ -532,22 +533,22 @@ void handleOneOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(function,command,0,directAddressing,A);
+            codeNum=installBinary(function,command,0,directAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
 
-            codeNum=instalBinary(line,0,0,0,R);
+            codeNum=installBinary(line,0,0,0,R);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
 
-    }else{
+    }else{ /* if the command is not a prn */
 
         if(checkRegister(line)!=ERROR){
-            codeNum=instalBinary(function,command,0,registerDirectAddressing,A);
+            codeNum=installBinary(function,command,0,registerDirectAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
-            codeNum=instalBinary(line,0,0,checkRegister(line),A);
+            codeNum=installBinary(line,0,0,checkRegister(line),A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
 
@@ -560,24 +561,27 @@ void handleOneOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(function,command,0,directAddressing,A);
+            codeNum=installBinary(function,command,0,directAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
-            codeNum=instalBinary(line,0,0,0,R);
+            codeNum=installBinary(line,0,0,0,R);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
     }
 
-    free(firsStr);
+    if(firsStr!=NULL){
+        free(firsStr);
+    }
     free(line);
 }
 
 void handleTowOperand(int command,char *function, char *Line, char *sourceFile, int lineNumber, int *errorCounter, int* IC, LineHolder **head){
     Operand *codeNum=NULL;
     int number;
-    char *firsStr= strFirstArgu(Line),*line= strDup(Line);
+    char *firsStr= strFirstArgu(Line),*line= strDup(Line);/* set a copy of Line */
 
+    /* the first parameter in the line */
     if(!firsStr[0]){
         fprintf(stderr,"Error in file %s: Missing parameter in line %d \n",sourceFile,lineNumber);
         (*errorCounter)++;
@@ -586,7 +590,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
         return;
     }
 
-    memmove(line,line+(strlen(firsStr)), strlen(line)+1); /*sec operand in the line */
+    memmove(line,line+(strlen(firsStr)), strlen(line)+1); /* remove the first parameter and stay with the sec parameter in the line */
     if(firsStr[strlen(firsStr)-1]==' '){
         firsStr[strlen(firsStr)-1]='\0';
     }
@@ -600,7 +604,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
         return;
     }
 
-    memmove(line,line+1, strlen(line)+1);
+    memmove(line,line+1, strlen(line)+1); /* remove the comma from the sec parameter*/
     if(line[strlen(line)-1]=='\n'){
         line[strlen(line)-1]='\0';
     }
@@ -671,14 +675,14 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
 
         if(checkRegister(firsStr)!=ERROR && checkRegister(line)!=ERROR){
             /* crate the opcode for the command arguments */
-            codeNum=instalBinary(function,command,registerDirectAddressing,registerDirectAddressing,A);
+            codeNum=installBinary(function,command,registerDirectAddressing,registerDirectAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
 
         if(checkRegister(firsStr)!=ERROR && checkRegister(line)!=ERROR){
             /* crate the opcode for the operand arguments */
-            codeNum=instalBinary(firsStr,0,checkRegister(firsStr),checkRegister(line),A);
+            codeNum=installBinary(firsStr,0,checkRegister(firsStr),checkRegister(line),A);
             addNode(head, createNodeItem(*IC, codeNum)); /* add to the node address list  */
             (*IC)++;
         }
@@ -703,7 +707,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
 
         if(checkRegister(line)!=ERROR){
             if(allDigits(firsStr)!=True){
-                codeNum=instalBinary(function,command,directAddressing,registerDirectAddressing,A);
+                codeNum=installBinary(function,command,directAddressing,registerDirectAddressing,A);
                 addNode(head, createNodeItem(*IC, codeNum));
                 (*IC)++;
             }
@@ -723,24 +727,24 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
                 free(firsStr);
                 return;
             }
-            codeNum=instalBinary(function,command,directAddressing, directAddressing,A);
+            codeNum=installBinary(function,command,directAddressing, directAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
 
         /* first operand opcode argument */
-        codeNum=instalBinary(firsStr,0,0,0,R);
+        codeNum=installBinary(firsStr,0,0,0,R);
         addNode(head, createNodeItem(*IC, codeNum));
         (*IC)++;
 
         /* sec operand opcode argument */
         if(checkRegister(line)!=ERROR){
             number=checkRegister(line);
-            codeNum=instalBinary(line,0,0,number,A);
+            codeNum=installBinary(line,0,0,number,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else if(allDigits(line)!=True){
-            codeNum=instalBinary(line,0,0,0,R);
+            codeNum=installBinary(line,0,0,0,R);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
@@ -758,26 +762,26 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
         if(checkRegister(firsStr)!=ERROR || checkRegister(line)!=ERROR){
             if(checkRegister(firsStr)!=ERROR){
                 if(allDigits(line)!=True){
-                    codeNum=instalBinary(function,command,registerDirectAddressing,directAddressing,A);
+                    codeNum=installBinary(function,command,registerDirectAddressing,directAddressing,A);
                     addNode(head, createNodeItem(*IC, codeNum));
                     (*IC)++;
                 }
 
                 if(allDigits(line)==True && command==cmp){
-                    codeNum=instalBinary(function,command,registerDirectAddressing,immediateAddressing,A);
+                    codeNum=installBinary(function,command,registerDirectAddressing,immediateAddressing,A);
                     addNode(head, createNodeItem(*IC, codeNum));
                     (*IC)++;
                 }
 
             }else if(checkRegister(line)!=ERROR){
                 if(allDigits(firsStr)==True){
-                    codeNum=instalBinary(function,command,immediateAddressing,registerDirectAddressing,A);
+                    codeNum=installBinary(function,command,immediateAddressing,registerDirectAddressing,A);
                     addNode(head, createNodeItem(*IC, codeNum));
                     (*IC)++;
                 }
 
                 if(allDigits(firsStr)!=True){
-                    codeNum=instalBinary(function,command,directAddressing,registerDirectAddressing,A);
+                    codeNum=installBinary(function,command,directAddressing,registerDirectAddressing,A);
                     addNode(head, createNodeItem(*IC, codeNum));
                     (*IC)++;
                 }
@@ -785,26 +789,26 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
 
         }else if(allDigits(firsStr)==True && checkRegister(firsStr)==ERROR && checkRegister(line)==ERROR){
             if(allDigits(line)!=True){
-                codeNum=instalBinary(function,command,immediateAddressing,directAddressing,A);
+                codeNum=installBinary(function,command,immediateAddressing,directAddressing,A);
                 addNode(head, createNodeItem(*IC, codeNum));
                 (*IC)++;
             }
 
             if(allDigits(line)==True && command==cmp){
-                codeNum=instalBinary(function,command,immediateAddressing,immediateAddressing,A);
+                codeNum=installBinary(function,command,immediateAddressing,immediateAddressing,A);
                 addNode(head, createNodeItem(*IC, codeNum));
                 (*IC)++;
             }
 
         }else if(allDigits(firsStr)!=True && checkRegister(firsStr)==ERROR && checkRegister(line)==ERROR){
             if(allDigits(line)!=True) {
-                codeNum = instalBinary( function, command, directAddressing,directAddressing,A);
+                codeNum = installBinary( function, command, directAddressing,directAddressing,A);
                 addNode(head, createNodeItem(*IC, codeNum));
                 (*IC)++;
             }
 
             if(allDigits(line)==True && command==cmp){
-                codeNum=instalBinary(function,command,directAddressing,immediateAddressing,A);
+                codeNum=installBinary(function,command,directAddressing,immediateAddressing,A);
                 addNode(head, createNodeItem(*IC, codeNum));
                 (*IC)++;
             }
@@ -826,12 +830,12 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(firsStr,number,0,0,A);
+            codeNum=installBinary(firsStr,number,0,0,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else if(checkRegister(firsStr)!=ERROR){
             number= checkRegister(firsStr);
-            codeNum=instalBinary(firsStr,0,number,0,A);
+            codeNum=installBinary(firsStr,0,number,0,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else {
@@ -843,7 +847,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(firsStr,0,0,0,R);
+            codeNum=installBinary(firsStr,0,0,0,R);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
@@ -851,7 +855,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
         /* sec operand opcode build argument  */
         if(checkRegister(line)!=ERROR){
             number=checkRegister(line);
-            codeNum=instalBinary(line,0,0,number,A);
+            codeNum=installBinary(line,0,0,number,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else if(allDigits(line)!=True){
@@ -863,11 +867,11 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(line,0,0,0,R);
+            codeNum=installBinary(line,0,0,0,R);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else if(command==cmp && allDigits(line)==True){
-            number= atoi(firsStr);
+            number= atoi(line);
 
             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
                 if(number<0){
@@ -881,7 +885,7 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
                 return;
             }
 
-            codeNum=instalBinary(line,number,0,0,A);
+            codeNum=installBinary(line,number,0,0,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         }
@@ -893,12 +897,12 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
 
 void handleExtern(char *Line, char *sourceFile, int lineNumber, int *errorCounter, LineHolder **head,symbolTable *table){
     char *secStr=NULL,*firsStr=NULL;
-    char *line= strDup(Line);
+    char *line= strDup(Line);/* set a copy of Line */
 
     secStr= strDup(line);
-    memmove(secStr,secStr+8, strlen(line)+1);
+    memmove(secStr,secStr+8, strlen(line)+1); /* save .extern form line */
     secStr= ignorSpace(secStr);
-    memmove(line,line+7, strlen(line)+1);
+    memmove(line,line+7, strlen(line)+1);/* remove the .extern from line */
     line= ignorSpace(line);
 
     if(line[0]=='\n'){
@@ -929,16 +933,16 @@ void handleExtern(char *Line, char *sourceFile, int lineNumber, int *errorCounte
         free(secStr);
         return;
     }
-
+    /* check label by label in the line */
     while(secStr!=NULL) {
-        firsStr = strFirstArgu(secStr);
-        if (firsStr == NULL) {
+        firsStr = strFirstArgu(secStr);/* get the libel upto the comma or '\0' */
+        if (firsStr == NULL){
             free(secStr);
             firsStr = NULL;
             break;
         }
 
-        memmove(secStr, secStr + strlen(firsStr), strlen(secStr));
+        memmove(secStr, secStr + strlen(firsStr), strlen(secStr));/* remove the label from the line */
         secStr = ignorSpace(secStr);
 
         if (secStr[0] == '\0') {
@@ -947,7 +951,7 @@ void handleExtern(char *Line, char *sourceFile, int lineNumber, int *errorCounte
         }
 
         if (secStr != NULL && secStr[0] != ',') {
-            errorCounter++;
+            (*errorCounter)++;
             fprintf(stderr, "Error in file %s: Missing comma '%s' in line %d \n", sourceFile, secStr, lineNumber);
             free(firsStr);
             break;
@@ -960,22 +964,21 @@ void handleExtern(char *Line, char *sourceFile, int lineNumber, int *errorCounte
 
         if (checkLabelInCommand(firsStr) == False) {
             fprintf(stderr, "Error in file %s: The '%s' is not valid Label in line %d \n", sourceFile, firsStr,
-                    lineNumber);
-            errorCounter++;
+            lineNumber);
+            (*errorCounter)++;
             free(firsStr);
             firsStr = NULL;
             continue;
         }
 
         if (symbolTableLockUpType(table, firsStr) == sENTRY || symbolTableLockUpType(table, firsStr) == sEXETRN) {
-            fprintf(stderr, "Error in file %s: The '%s' is not valid Label (already use) in line %d \n", sourceFile,
-                    firsStr, lineNumber);
-            errorCounter++;
+            fprintf(stderr, "Error in file %s: The '%s' is not valid Label (already use) in line %d \n", sourceFile,firsStr, lineNumber);
+            (*errorCounter)++;
             free(firsStr);
             firsStr = NULL;
             continue;
         }
-
+        /* add label into the symbol table with extern symbol */
         symbolTableInsert(table, firsStr, 0, sEXETRN);
         free(firsStr);
         firsStr = NULL;
@@ -986,7 +989,7 @@ void handleExtern(char *Line, char *sourceFile, int lineNumber, int *errorCounte
 
 void handleEntry(char *Line, char *sourceFile, int lineNumber, int *errorCounter, LineHolder **head,symbolTable *table){
     char *secStr=NULL;
-    char *line= strDup(Line);
+    char *line= strDup(Line);/* set a copy of Line */
 
     secStr=strDup(line);
     memmove(secStr,secStr+7, strlen(line)+1);
@@ -1019,7 +1022,6 @@ void handleEntry(char *Line, char *sourceFile, int lineNumber, int *errorCounter
 
     if(checkLabelInCommand(secStr)==False){
         fprintf(stderr,"Error in file %s: The '%s' is not valid Label in line %d \n",sourceFile,secStr,lineNumber);
-        errorCounter++;
         free(secStr);
         free(line);
         (*errorCounter)++;
@@ -1033,7 +1035,7 @@ void handleEntry(char *Line, char *sourceFile, int lineNumber, int *errorCounter
         (*errorCounter)++;
         return;
     }
-
+    /* add the label to the symbol table with entry symbol */
     symbolTableInsert(table,secStr,0,sENTRY);
 
     free(secStr);
@@ -1044,11 +1046,11 @@ void handleString(char *Line, char *sourceFile, int lineNumber, int *errorCounte
     Operand *codeNum=NULL;
     char *secStr=NULL;
     int c,index;
-    char *line= strDup(Line);
+    char *line= strDup(Line);/* set a copy of Line */
 
-    secStr= strDup(line);
+    secStr= strDup(line);/* copy the .string from line*/
     secStr[8]='\0';
-    memmove(line,line+7, strlen(line)+1);
+    memmove(line,line+7, strlen(line)+1);/* remove the .string from line*/
     line= ignorSpace(line);
 
     if(line[0]=='\n'){
@@ -1072,19 +1074,21 @@ void handleString(char *Line, char *sourceFile, int lineNumber, int *errorCounte
     }
     RemoveQuotationMarks(line);
     index=0;
-    if(line[index]=='\0'){
-        codeNum= instalBinary(secStr,'\0',0,0,0);
+    if(line[index]=='\0'){/* if there is no char between the quotation marks and only the '\0' to the addressing node */
+        codeNum= installBinary(secStr,'\0',0,0,0);
         addNode(head, createNodeItem(*DC, codeNum));
         (*DC)++;
     }
+
     while (line[index] != '\0'){/* check char by char and add it to the addressing node */
         c=(unsigned char)line[index];
-        codeNum= instalBinary(secStr,c,0,0,0);
-        addNode(head, createNodeItem(*DC, codeNum));
+        /* crate the binary operand for the data image */
+        codeNum= installBinary(secStr,c,0,0,0);
+        addNode(head, createNodeItem(*DC, codeNum));/* add and crate the linked node (addressing image linked list node)*/
         index++;
         (*DC)++;
         if (line[index] == '\0'){ /* include the null terminator at the end of the string*/
-            codeNum= instalBinary(secStr,'\0',0,0,0);
+            codeNum= installBinary(secStr,'\0',0,0,0);
             addNode(head, createNodeItem(*DC, codeNum));
             (*DC)++;
         }
@@ -1098,11 +1102,11 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
     Operand *codeNum=NULL;
     char *secStr=NULL;
     int number,index;
-    char *line= strDup(Line);
+    char *line= strDup(Line);/* set a copy of Line */
 
-    secStr= strDup(line);
+    secStr= strDup(line);/* save the .data label from the line */
     secStr[6]='\0';
-    memmove(line,line+5, strlen(line)+1);
+    memmove(line,line+5, strlen(line)+1);/* remove the .data from line */
     line= ignorSpace(line);
 
     if(line[0]=='\n'){
@@ -1133,7 +1137,7 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
         free(secStr);
         return;
     }
-
+    /* check the numbers one by one upto the '\0' */
     while (line[index] != '\0' && index<strlen(line)) {
 
         if(!isdigit(line[index]) && line[index]!=',' && line[index]!='+' && line[index]!='\0'){
@@ -1153,7 +1157,7 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
         }
 
         if(line[index] != ',' && line[index] != '\0'){
-            if(allDigitsForData(line)!=ERROR){
+            if(allDigitsForData(line)!=ERROR){/* check if the number is valid */
                 index+=allDigitsForData(line);
                 fprintf(stderr,"Error in file %s: Invalid parameter - not a number '%s' in line number %d \n",sourceFile,line,lineNumber);
                 (*errorCounter)++;
@@ -1162,7 +1166,7 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
                 memmove(line,line+index, strlen(line));
                 continue;
             }
-            number=getNumberFromData(line,&index);
+            number=getNumberFromData(line,&index);/* get the number from the line upto comma or '\0'*/
             if(!isdigit(line[index-1]) && line[index]=='\0'){
                 fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);
                 (*errorCounter)++;
@@ -1174,7 +1178,7 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
                 (*errorCounter)++;
                 break;
             }
-            memmove(line,line+index, strlen(line));
+            memmove(line,line+index, strlen(line));/* remove the comma from the line */
             index=0;
 
 
@@ -1188,9 +1192,9 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
                 (*errorCounter)++;
                 continue;
             }
-
-            codeNum= instalBinary(secStr,number,0,0,0);
-            addNode(head, createNodeItem(*DC, codeNum));
+            /* crate the binary operand for the data image */
+            codeNum= installBinary(secStr,number,0,0,0);
+            addNode(head, createNodeItem(*DC, codeNum));/* add and crate the linked node (addressing image linked list node)*/
             (*DC)++;
 
             continue;

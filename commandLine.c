@@ -23,7 +23,7 @@ void setFile(char *argv){
     ExNode *Extern=NULL;
     char *str=NULL;
 
-    str= strDup(argv);
+    str= strDup(argv);/* copy the file name */
     str[strlen(str)]='\0';
 
     /* Spread the macros from the input file */
@@ -35,6 +35,7 @@ void setFile(char *argv){
         return;
     }
 
+    /* check the input file (.am) after preprocessor and build the addressing image Node */
     if(firstPass(str,&head,symbol,&IC,&DC)!=True){
         printf("Couldn't compile the file %s\n", str);
         freeListNode(head);
@@ -43,6 +44,7 @@ void setFile(char *argv){
         return;
     }
 
+    /* check addressing image node and set all the unknown data with the new address and build the entry and extern data node if exists */
     if(secPass(str,head,symbol,IC,DC,&Extern,&Entry)!=True){
         printf("Couldn't compile the file %s\n", str);
         freeListNode(head);
@@ -51,20 +53,23 @@ void setFile(char *argv){
         return;
     }
 
+    /* the binary printing for help! */
     /*printObjFile(str,head,IC,DC);*/
 
+    /* Spread the address image node(head) with base64 in to object file */
     printObjFileBase64(str,head,IC,DC);
-    if(Entry!=NULL){
+
+    if(Entry!=NULL){/*if the Entry node are not empty Spread the entry image node(Entry) with base10 in to entry file */
         printEntFile(str,Entry);
     }
 
-    if(Extern!=NULL){
+    if(Extern!=NULL){/*if the Extern node are not empty Spread the extern image node(Extern) with base10 in to extern file */
         printExtFile(str,Extern);
     }
 
-    freeListNode(head);
-    freeSymbolTable(symbol);
-    freeListNodeEn(Entry);
-    freeListNodeEx(Extern);
-    free(str);
+    freeListNode(head);/* free the addressing image node */
+    freeSymbolTable(symbol);/* free the symbol table */
+    freeListNodeEn(Entry);/* free the Entry image node */
+    freeListNodeEx(Extern);/* free the Extern image node */
+    free(str);/* free the file name */
 }

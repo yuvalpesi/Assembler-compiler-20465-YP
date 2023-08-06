@@ -137,6 +137,7 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
         current=current->next;
         free(nameTemp);
         free(base64);
+        base64=NULL;
     }
 
 
@@ -243,10 +244,10 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
     free(sourceFile);
 }
 
-void printEntFile(char *argv,EnExNode *head){
+void printEntFile(char *argv,EnNode *head){
     FILE *fd=NULL;
     char *sourceFile=NULL;
-    EnExNode *current=head;
+    EnNode *current=head;
 
     sourceFile=(char*)malloc((strlen(argv)+4) * sizeof(char));
 
@@ -275,10 +276,10 @@ void printEntFile(char *argv,EnExNode *head){
     free(sourceFile);
 }
 
-void printExtFile(char *argv,EnExNode *head){
+void printExtFile(char *argv,ExNode *head){
     FILE *fd=NULL;
     char *sourceFile=NULL;
-    EnExNode *current=head;
+    ExNode *current=head;
 
     sourceFile=(char*)malloc((strlen(argv)+4) * sizeof(char));
 
@@ -307,7 +308,7 @@ void printExtFile(char *argv,EnExNode *head){
     free(sourceFile);
 }
 
-char *binaryToBase64(const char *binary){
+char* binaryToBase64(const char *binary){
     const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     char *first=NULL,*sec=NULL,*base64=NULL;
     int i,resultFirst=0,resultSec=0,sizeOfBase64=3,halfWord=(WORD_SIZE/2);

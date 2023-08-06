@@ -19,6 +19,8 @@ void setFile(char *argv){
     int IC=0,DC=0;
     symbolTable *symbol=initSymbolTable();
     LineHolder *head=NULL;
+    EnNode *Entry=NULL;
+    ExNode *Extern=NULL;
     char *str=NULL;
 
     str= strDup(argv);
@@ -41,7 +43,7 @@ void setFile(char *argv){
         return;
     }
 
-    if(secPass(str,head,symbol,IC,DC)!=True){
+    if(secPass(str,head,symbol,IC,DC,&Extern,&Entry)!=True){
         printf("Couldn't compile the file %s\n", str);
         freeListNode(head);
         freeSymbolTable(symbol);
@@ -52,9 +54,17 @@ void setFile(char *argv){
     /*printObjFile(str,head,IC,DC);*/
 
     printObjFileBase64(str,head,IC,DC);
+    if(Entry!=NULL){
+        printEntFile(str,Entry);
+    }
+
+    if(Extern!=NULL){
+        printExtFile(str,Extern);
+    }
 
     freeListNode(head);
     freeSymbolTable(symbol);
+    freeListNodeEn(Entry);
+    freeListNodeEx(Extern);
     free(str);
 }
-

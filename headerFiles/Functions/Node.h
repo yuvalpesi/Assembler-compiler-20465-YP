@@ -76,34 +76,68 @@ void addNodeLine(lineStr **head, lineStr *nodeItem);
 void freeListNodeLine(lineStr *head);
 
 /**
- * Structure defining a node in the linked list representing .extern or .entry.
+ * Structure defining a node in the linked list representing .entry.
  */
-typedef struct EnExNode{
-    char *lineStr;
+typedef struct EnNode{
+    char lineStr[MAX_LABLE];
     int address;
-    struct EnExNode *next;
-}EnExNode;
+    struct EnNode *next;
+}EnNode;
 
 /**
- * Creates a new node for a lineNode given string name and address.
+ * Structure defining a node in the linked list representing .extern.
+ */
+typedef struct ExNode{
+    char lineStr[MAX_LABLE];
+    int address;
+    struct ExNode *next;
+}ExNode;
+
+
+/**
+ * Creates a new entry node for a lineNode given string name and address.
  *
  * @param line The string name to be stored in the node.
  * @param address The address number to be stored in the node.
  * @return A pointer to the newly created node, or NULL if memory allocation fails.
  */
-EnExNode* createNodeEnEx(char *line,int address);
+EnNode* createNodeEn(char *line,int address);
 
 /**
- * Adds a new node to a linked list.
+ * Adds a new entry node to a linked list.
  *
  * @param head A pointer to the head of the linked list.
  * @param nodeItem A pointer to the node to be added.
  */
-void addNodeEnEx(EnExNode **head, EnExNode *nodeItem);
+void addNodeEn(EnNode **head, EnNode *nodeItem);
 
 /**
- * Frees a linked list, deallocating the memory occupied by each node.
+ * Frees a entry linked list, deallocating the memory occupied by each node.
  *
- * @param head A pointer to the head node of the linked list.
+ * @param head A pointer to the head node of the entry linked list.
  */
-void freeListNodeEnEx(EnExNode *head);
+void freeListNodeEn(EnNode *head);
+
+/**
+ * Creates a new extern node for a lineNode given string name and address.
+ *
+ * @param line The string name to be stored in the node.
+ * @param address The address number to be stored in the node.
+ * @return A pointer to the newly created node, or NULL if memory allocation fails.
+ */
+ExNode* createNodeEx(char *line,int address);
+
+/**
+ * Adds a new extern node to a linked list.
+ *
+ * @param head A pointer to the head of the linked list.
+ * @param nodeItem A pointer to the node to be added.
+ */
+void addNodeEx(ExNode **head, ExNode *nodeItem);
+
+/**
+ * Frees a extern linked list, deallocating the memory occupied by each node.
+ *
+ * @param head A pointer to the head node of the extern linked list.
+ */
+void freeListNodeEx(ExNode *head);

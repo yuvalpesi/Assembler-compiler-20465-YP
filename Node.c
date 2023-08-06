@@ -133,8 +133,8 @@ void freeListNodeLine(lineStr *head){
     }
 }
 
-EnExNode* createNodeEnEx(char *line,int address){
-    EnExNode *node = (EnExNode*)malloc(sizeof(EnExNode)); /* allocates memory for the node */
+EnNode* createNodeEn(char *line,int address){
+    EnNode *node = (EnNode*)malloc(sizeof(EnNode)); /* allocates memory for the node */
 
     if (node==NULL){
         printf("Error: unable to allocate memory for new node\n");
@@ -142,18 +142,18 @@ EnExNode* createNodeEnEx(char *line,int address){
     }
 
     /* Set the data and next pointer of the node */
-    node->lineStr= strDup(line);
+    strcpy(node->lineStr,line);
     node->address=address;
     node->next = NULL;
     return node;
 }
 
-void addNodeEnEx(EnExNode **head, EnExNode *nodeItem){
+void addNodeEn(EnNode **head, EnNode *nodeItem){
     if (*head==NULL){
         *head = nodeItem;
         nodeItem->next = NULL;
     }else{/* If the linked list already exists */
-        EnExNode *current = *head; /*Create a current pointer to traverse the list */
+        EnNode *current = *head; /*Create a current pointer to traverse the list */
 
         /* Find the last node in the linked list */
         while(current->next!=NULL) {
@@ -164,8 +164,8 @@ void addNodeEnEx(EnExNode **head, EnExNode *nodeItem){
     }
 }
 
-void freeListNodeEnEx(EnExNode *head){
-    EnExNode *temp=NULL;
+void freeListNodeEn(EnNode *head){
+    EnNode *temp=NULL;
 
     if(head==NULL){
         return;
@@ -173,7 +173,51 @@ void freeListNodeEnEx(EnExNode *head){
 
     while(head!=NULL){
         temp=head->next;
-        free(head->lineStr);
+        free(head);
+        head=temp;
+    }
+}
+
+ExNode* createNodeEx(char *line,int address){
+    ExNode *node = (ExNode*)malloc(sizeof(ExNode)); /* allocates memory for the node */
+
+    if (node==NULL){
+        printf("Error: unable to allocate memory for new node\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Set the data and next pointer of the node */
+    strcpy(node->lineStr,line);
+    node->address=address;
+    node->next = NULL;
+    return node;
+}
+
+void addNodeEx(ExNode **head, ExNode *nodeItem){
+    if (*head==NULL){
+        *head = nodeItem;
+        nodeItem->next = NULL;
+    }else{/* If the linked list already exists */
+        ExNode *current = *head; /*Create a current pointer to traverse the list */
+
+        /* Find the last node in the linked list */
+        while(current->next!=NULL) {
+            current = current->next;
+        }
+        current->next = nodeItem; /* Set the new node as the next node of the last node */
+        nodeItem->next = NULL; /* Maintain the linked list by setting the next pointer of the new node to the null */
+    }
+}
+
+void freeListNodeEx(ExNode *head){
+    ExNode *temp=NULL;
+
+    if(head==NULL){
+        return;
+    }
+
+    while(head!=NULL){
+        temp=head->next;
         free(head);
         head=temp;
     }

@@ -7,7 +7,7 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC);
  * @param argv Pointer to a string representing the name of the input assembly file.
  * @param head Pointer to the head of the linked list containing the assembly lines.
  */
-void printEntFile(char *argv,EnExNode *head);
+void printEntFile(char *argv,EnNode *head);
 
 /**
  * Prints the extern symbols and their corresponding addresses to an extern symbols file.
@@ -15,7 +15,7 @@ void printEntFile(char *argv,EnExNode *head);
  * @param argv Pointer to a string representing the name of the input assembly file.
  * @param head Pointer to the head of the linked list containing the assembly lines.
  */
-void printExtFile(char *argv,EnExNode *head);
+void printExtFile(char *argv,ExNode *head);
 
 /**
  * Prints the object code, using Base64 encoding, to the object file.

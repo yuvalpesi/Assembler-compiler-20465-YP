@@ -1,9 +1,9 @@
 #include "data.h"
 
-int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
+int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC,ExNode **Extern,EnNode **Entry){
     LineHolder *current=head;
     char *lableName=NULL;
-    int num;
+    int num,errorCounter=0;
     Operand *codeNum=NULL;
 
 
@@ -47,19 +47,19 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC){
 
     if(((IC+DC)+ADDRESS_START)>RAM_SIZE){
         fprintf(stderr,"Error in file %s: your program size is too big\n",argv);
-        return False;
+        errorCounter++;
     }
 
-    checkEntry(argv,symbol,IC);
-    checkExtern(argv,symbol,&head);
+    checkEntry(Entry,argv,symbol,IC,&errorCounter);
+    checkExtern(Extern,argv,symbol,&head,errorCounter);
 
-    return True;
+    return errorCounter==0?True:False;
 }
 
-void checkEntry(char *argv,symbolTable *table,int IC){
+void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsCounter){
     int i,num,type;
-    EnExNode *temp=NULL;
-    char *labelName=NULL;
+    EnNode *head=NULL;
+    char labelName[MAX_LABLE]= {0};
 
     for(i=0;i<TABLE_SIZE;i++){
         symbolTableStart *start=table->entry[i];
@@ -69,75 +69,58 @@ void checkEntry(char *argv,symbolTable *table,int IC){
         }
 
         for (;;){
+            strcpy(labelName,start->symbolName);
             type=start->symbolType;
-            num= symbolTableLockUpAddress(table,start->symbolName);
+            num= symbolTableLockUpAddress(table,labelName);
 
-            if(symbolTableLockUp(table,start->symbolName)!=NULL && num==ERROR && type==sENTRY){
-                fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,start->symbolName);
-                freeListNodeEnEx(temp);
+            if(symbolTableLockUp(table,labelName)!=NULL && num==ERROR && type==sENTRY){
+                fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,labelName);
+                (*errorsCounter)++;
+                if(head!=NULL){
+                    freeListNodeEn(head);
+                }
                 return;
             }
 
             if(type==sENTRY && num!=ERROR){
-                if(labelName!=NULL){
-                free(labelName);
-                labelName=NULL;
-            }
-                labelName= strDup(start->symbolName);
                 num+=(100);
                 if(symbolTableLockUpICDC(table, labelName) == sDC){
                     num+=IC;
                 }
 
-                addNodeEnEx(&temp, createNodeEnEx(labelName, num));
+                addNodeEn(&head, createNodeEn(labelName, num));
             }
 
             if(start->next==NULL){
-
                 break;
             }
-
             start=start->next;
         }
     }
 
-    if(temp==NULL){
-        return;
-    }else{
-        printEntFile(argv,temp);
-        freeListNodeEnEx(temp);
-        if(labelName!=NULL)free(labelName);
+    if(head!=NULL) {
+        *Entry=head;
     }
 }
 
-void checkExtern(char *argv,symbolTable *table,LineHolder **curr){
+void checkExtern(ExNode **Extern,char *argv,symbolTable *table,LineHolder **curr,int errorsCounter){
     int num;
     LineHolder *prev=*curr;
-    EnExNode *temp=NULL;
-    char *tempStr=NULL;
+    ExNode *head=NULL;
+    char tempStr[MAX_LABLE]= {0};
 
     while (prev!=NULL){
-
+        strcpy(tempStr,prev->Binary->lableName);
         if (symbolTableLockUpType(table, prev->Binary->lableName) == sEXETRN) {
-            if(tempStr!=NULL){
-                free(tempStr);
-                tempStr=NULL;
-            }
-            tempStr= strDup(prev->Binary->lableName);
             num=prev->address+100;
-
-            addNodeEnEx(&temp, createNodeEnEx(tempStr, num));
+            addNodeEx(&head, createNodeEx(tempStr, num));
         }
 
         prev=prev->next;
     }
 
-    if(temp==NULL){
-        return;
-    } else{
-        printExtFile(argv,temp);
-        freeListNodeEnEx(temp);
-        if(tempStr!=NULL)free(tempStr);
+    if(head!=NULL && errorsCounter==0){
+        *Extern=head;
     }
 }
 

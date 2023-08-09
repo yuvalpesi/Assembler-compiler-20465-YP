@@ -29,26 +29,31 @@ void setFile(char *argv){
     /* Spread the macros from the input file */
     if(!preProccesor(str)){
         printf("Couldn't spread the macros correctly into %s\n", str);
-        freeListNode(head);
-        freeSymbolTable(symbol);
-        free(str);
+        freeSymbolTable(symbol);/* free the symbol table */
+        free(str);/* free the file name */
         return;
     }
 
     /* check the input file (.am) after preprocessor and build the addressing image Node */
     if(firstPass(str,&head,symbol,&IC,&DC)!=True){
+        /* find more error in the sec pass */
+        secPass(str,head,symbol,IC,DC,&Extern,&Entry);
         printf("Couldn't compile the file %s\n", str);
-        freeListNode(head);
-        freeSymbolTable(symbol);
-        free(str);
+        freeListNode(head);/* free the addressing image node */
+        freeSymbolTable(symbol);/* free the symbol table */
+        freeListNodeEn(Entry);/* free the Entry image node */
+        freeListNodeEx(Extern);/* free the Extern image node */
+        free(str);/* free the file name */
         return;
     }
 
     /* check addressing image node and set all the unknown data with the new address and build the entry and extern data node if exists */
     if(secPass(str,head,symbol,IC,DC,&Extern,&Entry)!=True){
         printf("Couldn't compile the file %s\n", str);
-        freeListNode(head);
-        freeSymbolTable(symbol);
+        freeListNode(head);/* free the addressing image node */
+        freeSymbolTable(symbol);/* free the symbol table */
+        freeListNodeEn(Entry);/* free the Entry image node */
+        freeListNodeEx(Extern);/* free the Extern image node */
         free(str);
         return;
     }

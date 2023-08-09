@@ -31,6 +31,16 @@ enum are{
 };
 
 /**
+ * Enumeration defining the  detect directive types.
+ */
+enum detectDirective{
+    String,
+    Data,
+    Extern,
+    Entry
+};
+
+/**
  * Enumeration defining the addressing methods for operands in assembly instructions.
  */
 enum AddressingMethods{
@@ -46,12 +56,12 @@ enum AddressingMethods{
  *
  * @param argv: The name of the assembly source file.
  * @param nodeHead: A pointer to the head of the LineHolder linked list.
- * @param symbolTabl: A pointer to the symbol table.
+ * @param SymbolTable: A pointer to the symbol table.
  * @param IC: A pointer to the instruction counter.
  * @param DC: A pointer to the data counter.
  * @return: True if the first pass is successful and no errors are encountered, False otherwise.
  */
-int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,int*DC);
+int firstPass(char *argv, LineHolder **nodeHead, symbolTable *SymbolTable, int *IC, int*DC);
 
 /**
  * Determines the type of a command based on the given string.
@@ -61,6 +71,21 @@ int firstPass(char *argv,LineHolder **nodeHead,symbolTable *symbolTabl,int *IC,i
  * @return The type of the command if it matches a predefined function, or ERROR if no match is found.
  */
 int commandType(char *str);
+
+/**
+ * Find the type of a directive in a given string.
+ * This function checks the provided string for known directive types
+ * and returns an index indicating the type of directive found.
+ *
+ * @param str A pointer to a null-terminated string containing the directive.
+ * @return An index representing the type of directive found:
+ *         - 0 for ".string"
+ *         - 1 for ".data"
+ *         - 2 for ".extern"
+ *         - 3 for ".entry"
+ *         - ERROR if the directive is not recognized.
+ */
+int findDirectiveType(char *str);
 
 /**
  * This function installs a binary representation of an operand based on its type and values.
@@ -104,7 +129,7 @@ int checkRegister(char *str);
  * @param str: The input string from which the label name is to be extracted.
  * @return: A pointer to the extracted label name substring, or NULL if no label name is found.
  */
-char *labelName(char *str);
+char *getLabelName(char *str);
 
 /**
  * This function checks if the given string is a valid label for a command.
@@ -117,91 +142,16 @@ char *labelName(char *str);
 int checkLabelInCommand(char *str);
 
 /**
- * Handles string command, which processes and adds string data to the data memory.
- *
- * @param Line The line containing the data command.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the data command in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param DC Pointer to the data counter, used to keep track of the current position in the data memory.
- * @param head Pointer to the head of the linked list that holds the data memory.
- */
-void handleString(char *line, char *sourceFile, int lineNumber, int *errorCounter,int *DC,LineHolder **head);
-
-/**
- * Handles data command, which processes and adds data values to the data memory.
- *
- * @param Line The line containing the data command.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the data command in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param DC Pointer to the data counter, used to keep track of the current position in the data memory.
- * @param head Pointer to the head of the linked list that holds the data memory.
- */
-void handleData(char *line, char *sourceFile, int lineNumber, int *errorCounter,int *DC,LineHolder **head);
-
-/**
- * Handles the entry command, which marks and adds a symbol as an entry point in the symbol table.
+ * Handles the label command, which marks and adds a symbol as an IC or DC in the symbol table.
  *
  * @param Line The line containing the entry command.
  * @param sourceFile The name of the source file being processed.
  * @param lineNumber The line number of the entry command in the source file.
  * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param head Pointer to the head of the linked list that holds the program's code and data memory.
+ * @param IC The code image counter.
+ * @param DC The data image counter.
  * @param table Pointer to the symbol table to store and manage symbols.
+ * @return True if there is label and there is no errors. or if there is no label return True as well.
+ *         if there is error in the label return False.
  */
-void handleEntry(char *line, char *sourceFile, int lineNumber, int *errorCounter,LineHolder **head,symbolTable *table);
-
-/**
- * Handles the extern command, which marks and adds a symbol as an extern point in the symbol table.
- *
- * @param Line The line containing the entry command.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the entry command in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param head Pointer to the head of the linked list that holds the program's code and data memory.
- * @param table Pointer to the symbol table to store and manage symbols.
- */
-void handleExtern(char *line, char *sourceFile, int lineNumber, int *errorCounter,LineHolder **head,symbolTable *table);
-
-/**
- * Handles no-operand instructions (commands that require no operands) and generates their machine code.
- *
- * @param command The opcode of the instruction.
- * @param function The function name of the instruction.
- * @param Line The line containing the instruction.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the instruction in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param IC Pointer to the instruction counter, used to keep track of the memory address for the current instruction.
- * @param head Pointer to the head of the linked list that holds the program's code and data memory.
- */
-void handleNoOperand(int command,char *function, char *line, char *sourceFile, int lineNumber, int *errorCounter, int* IC,LineHolder **head);
-
-/**
- * Handles one-operand instructions (commands that require one operands) and generates their machine code.
- *
- * @param command The opcode of the instruction.
- * @param function The function name of the instruction.
- * @param Line The line containing the instruction.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the instruction in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param IC Pointer to the instruction counter, used to keep track of the memory address for the current instruction.
- * @param head Pointer to the head of the linked list that holds the program's code and data memory.
- */
-void handleOneOperand(int command,char *function, char *Line, char *sourceFile, int lineNumber, int *errorCounter, int* IC,LineHolder **head);
-
-/**
- * Handles two-operand instructions (commands that require two operands) and generates their machine code.
- *
- * @param command The opcode of the instruction.
- * @param function The function name of the instruction.
- * @param Line The line containing the instruction.
- * @param sourceFile The name of the source file being processed.
- * @param lineNumber The line number of the instruction in the source file.
- * @param errorCounter Pointer to the error counter, used to track the number of errors encountered.
- * @param IC Pointer to the instruction counter, used to keep track of the memory address for the current instruction.
- * @param head Pointer to the head of the linked list that holds the program's code and data memory.
- */
-void handleTowOperand(int command,char *function, char *Line, char *sourceFile, int lineNumber, int *errorCounter, int* IC,LineHolder **head);
+int handleLabel(char *line, char *sourceFile,int lineNumber, int *errorCounter,int IC,int DC,symbolTable *table);

@@ -1,4 +1,13 @@
 
+/**
+ * Prints the object code, using binary, to the object file.
+ * (not in use at final just for help)
+ * 
+ * @param argv Pointer to a string representing the name of the input assembly file.
+ * @param head Pointer to the head of the linked list containing the assembly lines.
+ * @param IC   The value of the instruction counter (IC) indicating the start address of the code.
+ * @param DC   The value of the data counter (DC) indicating the start address of the data.
+ */
 void printObjFile(char *argv,LineHolder *head,int IC,int DC);
 
 /**

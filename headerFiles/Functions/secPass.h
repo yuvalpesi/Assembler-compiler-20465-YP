@@ -41,6 +41,5 @@ void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsC
  * @param Extern: A extern linked list pointer.
  * @param table: The symbol table.
  * @param curr: The current LineHolder node being processed.
- * @param errorsCounter: An errors counter flag
  */
-void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr,int errorsCounter);
+void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr);

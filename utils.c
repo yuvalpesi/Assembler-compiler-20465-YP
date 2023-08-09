@@ -1,6 +1,6 @@
 #include "data.h"
 
-char* ignorSpace(char *str){
+char* ignoreSpace(char *str){
     int i=0;
 
     if(str==NULL){
@@ -19,7 +19,7 @@ void RemoveAllSpaces(char *str){
     int i,count=0;
 
     for(i=0;str[i];i++){
-        if(str[i]!=' ' && str[i]!='\t' && str[i]!='\n'){
+        if(str[i]!=' ' && str[i]!='\t' && str[i]!='\0'){
             str[count++]=str[i];
         }
     }
@@ -166,86 +166,6 @@ int getNumberFromData(char *str,int *index){
     num=atoi(temp);
     free(temp);
     return num;
-}
-
-int checkString(const char *str){
-    int i=0,j=0;
-    char string[]=".string";
-    /* skip leading whitespace characters*/
-    while (isspace(str[i])){
-        i++;
-    }
-
-    while(j< strlen(string)){
-        if(str[i]!=string[j]){
-            return False;
-        }
-        i++;
-        j++;
-    }
-
-    return True;
-}
-
-int checkData(const char *str){
-    int i=0,j=0;
-    char data[]=".data";
-
-    if(str==NULL){
-        return False;
-    }
-    /* skip leading whitespace characters*/
-    while (isspace(str[i])){
-        i++;
-    }
-
-    while(j< strlen(data)){
-        if(str[i]!=data[j]){
-            return False;
-        }
-        i++;
-        j++;
-    }
-
-    return True;
-}
-
-int checksExtern(const char *str){
-    int i=0,j=0;
-    char Extern[]=".extern";
-    /* skip leading whitespace characters*/
-    while (isspace(str[i])){
-        i++;
-    }
-
-    while(j< strlen(Extern)){
-        if(str[i]!=Extern[j]){
-            return False;
-        }
-        i++;
-        j++;
-    }
-
-    return True;
-}
-
-int checksEntry(const char *str){
-    int i=0,j=0;
-    char Entry[]=".entry";
-    /* skip leading whitespace characters*/
-    while (isspace(str[i])){
-        i++;
-    }
-
-    while(j< strlen(Entry)){
-        if(str[i]!=Entry[j]){
-            return False;
-        }
-        i++;
-        j++;
-    }
-
-    return True;
 }
 
 int findComma(char *str){

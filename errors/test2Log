@@ -1,0 +1,2 @@
+Error in file ./errors/test2.am: Extraneous text after end of command 'error' in line 15 
+Error in file ./errors/test2: The .entry code label 'notUse' is not in use

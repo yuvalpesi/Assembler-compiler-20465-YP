@@ -24,7 +24,7 @@ void addNode(LineHolder **head, LineHolder *nodeItem){
         LineHolder *current = *head; /*Create a current pointer to traverse the list */
 
         /* Find the last node in the linked list that is data image*/
-        if(checkString(nodeItem->Binary->lableName)==True || checkData(nodeItem->Binary->lableName)==True){
+        if(findDirectiveType(nodeItem->Binary->lableName)!=ERROR){
             while(current->next!=NULL ) {
                 current = current->next;
             }
@@ -43,12 +43,12 @@ void addNode(LineHolder **head, LineHolder *nodeItem){
                 while (current!=NULL && current->next!=NULL) {
                     prev = current;
                     current = current->next;
-                    if(checkData(current->Binary->lableName)!=False || checkString(current->Binary->lableName)!=False){
+                    if(findDirectiveType(current->Binary->lableName)==Data || findDirectiveType(current->Binary->lableName)==String){
                         break;
                     }
                 }
 
-                if (current->next == NULL && checkData(current->Binary->lableName)==False && checkString(current->Binary->lableName)==False) {
+                if (current->next == NULL && findDirectiveType(current->Binary->lableName)!=Data && findDirectiveType(current->Binary->lableName)!=String) {
                     current->next = nodeItem; /* Set the new node as the next node of the last node */
                     nodeItem->next = NULL; /* Maintain the linked list by setting the next pointer of the new node to the null */
                 } else {
@@ -56,7 +56,9 @@ void addNode(LineHolder **head, LineHolder *nodeItem){
                     nodeItem->next = current; /* connect the rest of the node */
                 }
             }
+
         }
+
     }
 }
 
@@ -65,7 +67,7 @@ void replaceNodeItem(LineHolder * head, char *item, Operand *code) {
 
     while (current != NULL) {
         if (strcmp(current->Binary->lableName,item)==0) {
-            freeBinary(current->Binary); /* free all the binary struct */
+            freeBinary(current->Binary);
             free(current->Binary->lableName);
             free(current->Binary);
             current->Binary = code;
@@ -88,47 +90,6 @@ void freeListNode(LineHolder *head){
     }
     free(head);
     free(temp);
-}
-
-lineStr* createNodeLine(char *line){
-    lineStr *node = (lineStr*)malloc(sizeof(lineStr)); /* allocates memory for the node */
-
-    if (node==NULL){
-        printf("Error: unable to allocate memory for new node\n");
-        exit(EXIT_FAILURE);
-    }
-
-    /* Set the data and next pointer of the node */
-    node->lineStr= strDup(line);
-    node->next = NULL;
-    return node;
-}
-
-void addNodeLine(lineStr **head, lineStr *nodeItem){
-    if (*head==NULL){
-        *head = nodeItem;
-        nodeItem->next = NULL;
-    }else{/* If the linked list already exists */
-        lineStr *current = *head; /*Create a current pointer to traverse the list */
-
-        /* Find the last node in the linked list */
-        while(current->next!=NULL) {
-            current = current->next;
-        }
-        current->next = nodeItem; /* Set the new node as the next node of the last node */
-        nodeItem->next = NULL; /* Maintain the linked list by setting the next pointer of the new node to the null */
-    }
-}
-
-void freeListNodeLine(lineStr *head){
-    lineStr *temp=NULL;
-
-    while(head!=NULL){
-        temp=head->next;
-        free(head->lineStr);
-        free(head);
-        head=temp;
-    }
 }
 
 EnNode* createNodeEn(const char *line,int address){

@@ -20,6 +20,9 @@ int preProccesor(char *inputFileName){
     /* If the file can not be open it will tell to the user*/
     if(!(inputFile=fopen(sourceFile, "r"))){
         fprintf(stderr,"\n Error: Cannot open the file %s!\n",inputFileName);
+        freeMcroTable(macroTable);
+        free(sourceFile);
+        free(line);
         return False;
     }
 
@@ -35,7 +38,7 @@ int preProccesor(char *inputFileName){
     while(!feof(inputFile) && fgets(line,MAX_LINE_LENGHT+2,inputFile)!=NULL){
         wordsCounter=0;
         lineNumber++;
-        line=ignorSpace(line);
+        line=ignoreSpace(line);
 
         if(line[i]=='\n' || line[i]=='\0' || line[i]==EOF || line[i]==';'){
             continue;
@@ -54,8 +57,7 @@ int preProccesor(char *inputFileName){
                 exit(EXIT_FAILURE);
             }
             strcpy(mcroName,splitLine[1]);
-            if(checkRegister(mcroName)!=ERROR || checksEntry(mcroName)!=False || checksExtern(mcroName)!=False ||
-               checkData(mcroName)!=False || checkString(mcroName)!=False || commandType(mcroName)!=ERROR){
+            if(checkRegister(mcroName)!=ERROR || findDirectiveType(mcroName)!=ERROR || commandType(mcroName)!=ERROR){
                 remove(sourceFile);
                 fprintf(stderr,"Error in file %s.as: macro name is assembler Reserved Words '%s' in line %d\n",inputFileName,mcroName,lineNumber);
                 freeAllSplitString(splitLine,wordsCounter);

@@ -18,10 +18,14 @@ typedef struct Line{
 LineHolder* createNodeItem(int address,struct Operand *code);
 
 /**
- * Adds a new node to a linked list.
+ * Adds a new node to a addressing linked list.
+ * If it is data image it will located in the end of the linked list
+ * If it is code it will find the last code image and put it in the end of it
+ * And the list will be at first the code image and right after it end
+ * the data image
  *
- * @param head A pointer to the head of the linked list.
- * @param nodeItem A pointer to the node to be added.
+ * @param head A pointer to the head of the addressing linked list.
+ * @param nodeItem A pointer to the address node to be added.
  */
 void addNode(LineHolder **head, LineHolder *nodeItem);
 
@@ -43,37 +47,6 @@ void replaceNodeItem(LineHolder * head, char *item, Operand *code);
  * @param head A pointer to the head node of the linked list.
  */
 void freeListNode(LineHolder *head);
-
-/**
- * Structure defining a node in the linked list representing lines of text.
- */
-typedef struct lineStr{
-    char *lineStr;
-    struct lineStr *next;
-}lineStr;
-
-/**
- * Creates a new node for a lineNode given string line.
- *
- * @param line The string line to be stored in the node.
- * @return A pointer to the newly created node, or NULL if memory allocation fails.
- */
-lineStr* createNodeLine(char *line);
-
-/**
- * Adds a new node to a linked list.
- *
- * @param head A pointer to the head of the linked list.
- * @param nodeItem A pointer to the node to be added.
- */
-void addNodeLine(lineStr **head, lineStr *nodeItem);
-
-/**
- * Frees a linked list, deallocating the memory occupied by each node.
- *
- * @param head A pointer to the head node of the linked list.
- */
-void freeListNodeLine(lineStr *head);
 
 /**
  * Structure defining a node in the linked list representing .entry.

@@ -41,7 +41,7 @@ void printObjFileBase64(char *argv,LineHolder *head,int IC,int DC){
 
         fprintf(fd,"\n       ");
         nameTemp= strDup(current->Binary->lableName);
-        if(checkString(nameTemp)==True || checkData(nameTemp)==True){
+        if(findDirectiveType(nameTemp)!=ERROR){
 
             for (i = 11; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.directiveSentence->directive >> i) & 1;
@@ -175,7 +175,7 @@ void printObjFile(char *argv,LineHolder *head,int IC,int DC){
     while (current!=NULL){
         fprintf(fd,"\n0%d       ",(current->address+100));
 
-        if(strcmp(current->Binary->lableName,".string")==0 || strcmp(current->Binary->lableName,".data")==0){
+        if(findDirectiveType(current->Binary->lableName)!=ERROR){
             for (i = 11; i >= 0; i--) {
                 unsigned int bit = (current->Binary->operandStucter.directiveSentence->directive >> i) & 1;
                 fprintf(fd,"%u", bit);
@@ -268,8 +268,7 @@ void printEntFile(char *argv,EnNode *head){
     }
 
     while (current!=NULL){
-        fputs(current->lable,fd);
-        fprintf(fd,"      %d\n",current->address);
+        fprintf(fd,"%-10s %6d\n",current->lable,current->address);
         current=current->next;
     }
 
@@ -301,8 +300,7 @@ void printExtFile(char *argv,ExNode *head){
     }
 
     while (current!=NULL){
-        fputs(current->lable,fd);
-        fprintf(fd,"      %d\n",current->address);
+        fprintf(fd,"%-10s %5d\n", current->lable, current->address);
         current=current->next;
     }
 

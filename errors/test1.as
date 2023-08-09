@@ -10,6 +10,7 @@ I wil lealcasknc ake' jei erlaks ;ase ien asl ;sei ekcvma;slk oe kcamsl;ke iekcm
 
 ;comma errors
 myArray: .data 12,6, -9, 10,
+ .data 2500
 myArray2: .data 12,6,-9,10,,
 myArray3: .data ,12,6, -9, , 10
 myArray4: .data 12,     ,    6,-9,10
@@ -49,6 +50,7 @@ K2: .string "I am a very long string that will surely exceed the maximum length 
     .string za "wardo".
     .string za ."wardo"
     .string ",
+
 ;extraneous words
     .data 943 .data
     .string "sdf" .string
@@ -119,70 +121,66 @@ someLabel44:bne
 someLabel45:jsr
 someLabel46:red
 someLabel47:prn
+
+
 ;unknown words
 COOK tasty, pie
     .Data 12, 675
     .sTring "Whoops"
+
+
 ;operand addressing errors
-mov %ohno, 1
-mov %ohno, %ohyes
-mov 3, %ohno
-mov %ohno, @r3
+mov ohno, 1
+mov oh&no, ohyes
+mov 3, oh&no
+mov oh&no, @r3
 mov -1, 5
-mov -1, %ohyes
-cmp %ohno, %ohyes
+mov -1, ohyes
+cmp oh&no, ohyes
 add 3, 1
-add %ohno, %ohyes
-add %ohno, someLabel47
-add %ohno, @r3
+add oh&no, oh&nos
+add oh&no, someLabel47
+add oh&no, @r3
 add -1, 5
-add -1, %ohyes
-sub %ohno, 1
-sub %ohno, %ohyes
-sub %ohno, someLabel47
-sub %ohno, @r3
+add -1, oh&no
+sub oh&no, 1
+sub oh&no, oh&nos
+sub oh&no, someLabel47
+sub oh&no, @r3
 sub -1, 5
-sub -1, %ohyes
+sub -1, oh&no
 lea l, #8
 lea l, @r4
-lea l, %ohno
+lea l, oh&no
 lea l, -1
-lea %ohno, -1
-lea %ohno, %ohyes
-lea %ohno, someLabel47
-lea %ohno, @r0
+lea oh&no, -1
+lea oh&no, oh&nos
+lea oh&no, someLabel47
+lea oh&no, @r0
 lea @r1, -1
-lea @r1, %ohno
+lea @r1, oh&no
 lea @r1, someLabel47
 lea @r1, @r0
 lea someLabel47, -1
-lea someLabel47, %ohno
+lea someLabel47, oh&no
 clr -1
-clr %ohno
+clr oh&no
 not -1
-not %ohno
+not oh&no
 inc -1
-inc %ohno
+inc oh&no
 dec -1
-dec %ohno
+dec oh&no
 jmp -1
 jmp @r1,@r2
 bne -1
 jsr -1
-prn %ohno
+prn oh&no
 rts -1
 rts someLabel47
-rts %ohno
+rts oh&no
 rts @r1
 stop -1
 stop someLabel47
-stop %ohno
+stop oh&no
 stop @r1
-
-;jump command errors:
-jmp @r1,@r2
-jmp L1
-jmp L1@r1
-jmp @r1,@r2,@r3
-jmp @r1,@r2
-clr @r1,@r2

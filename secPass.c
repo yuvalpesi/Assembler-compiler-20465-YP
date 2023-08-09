@@ -2,47 +2,49 @@
 
 int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC,ExNode **Extern,EnNode **Entry){
     LineHolder *current=head;
-    char *lableName=NULL;
+    char *labelName=NULL;
     int num,errorCounter=0;
     Operand *codeNum=NULL;
 
+    /* check the addressing linked list node (not like int the workbook I am not opening again the file) 
+     * and update the data counter with IC and find the address of the labels in the symbol table */
     while (head!=NULL){
         /* if it is a data or sting type add the IC counter to the DC address*/
-        if(checkString(head->Binary->lableName)!=False || checkData(head->Binary->lableName)!=False){
+        if(findDirectiveType(head->Binary->lableName)==String || findDirectiveType(head->Binary->lableName)==Data){
             head->address+=IC;
         }
 
         /* find if the label from the addressing image node is in the table and dup the name*/
         if(symbolTableLockUp(symbol,head->Binary->lableName)!=NULL){
-            lableName= strDup(symbolTableLockUp(symbol,head->Binary->lableName));
+            labelName= strDup(symbolTableLockUp(symbol, head->Binary->lableName));
         }
 
-        if(lableName==NULL){
+        if(labelName == NULL){
             head=head->next;
             continue;
         }
         /* num is equal to address variable */
-        num=symbolTableLockUpAddress(symbol,lableName); /* get the address from the table that is not entry or extern type */
+        num=symbolTableLockUpAddress(symbol, labelName); /* get the address from the table that is not entry or extern type */
 
-        if(symbolTableLockUpType(symbol, lableName) == sEXETRN){
+        if(symbolTableLockUpType(symbol, labelName) == sEXETRN){
             /* carte a new bit-field operand */
-            codeNum=installBinary(lableName,0,0,0,E);
-            replaceNodeItem(head,lableName,codeNum);/* replace with new address location*/
+            codeNum=installBinary(labelName, 0, 0, 0, E);
+            replaceNodeItem(head, labelName, codeNum);/* replace with new address location*/
         }
 
-        if(num!=ERROR && commandType(lableName)==ERROR ){
+        if(num!=ERROR && commandType(labelName) == ERROR ){
             num+=(100);
             /* if the label is data image add to the address the IC counter*/
-            if(symbolTableLockUpICDC(symbol, lableName) == sDC){
+            if(symbolTableLockUpICDC(symbol, labelName) == sDC){
                 num+=IC;
             }
             /* carte a new bit-field operand */
-            codeNum=installBinary(lableName,num,0,0,R);
-            replaceNodeItem(head,lableName,codeNum);/* replace with new address location*/
+            codeNum=installBinary(labelName, num, 0, 0, R);
+            replaceNodeItem(head, labelName, codeNum);/* replace with new address location*/
         }
 
-        free(lableName);
-        lableName=NULL;
+        free(labelName);
+        labelName=NULL;
         head=head->next;
     }
 
@@ -57,7 +59,7 @@ int secPass(char *argv,LineHolder *head, symbolTable *symbol,int IC,int DC,ExNod
     checkEntry(Entry,argv,symbol,IC,&errorCounter);
 
     /* crate an extern node if there is one in the file and if not return null list */
-    checkExtern(Extern,symbol,&head,errorCounter);
+    checkExtern(Extern,symbol,&head);
 
     return errorCounter==0?True:False;
 }
@@ -81,7 +83,7 @@ void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsC
 
             /* if the is label that is not in used send error */
             if(symbolTableLockUp(table,labelName)!=NULL && num==ERROR && type==sENTRY){
-                fprintf(stderr,"Error in file %s: The .entry code label %s is not in use\n",argv,labelName);
+                fprintf(stderr,"Error in file %s: The .entry code label '%s' is not in use\n",argv,labelName);
                 (*errorsCounter)++;
                 if(head!=NULL){
                     freeListNodeEn(head);
@@ -107,14 +109,13 @@ void checkEntry(EnNode **Entry,char *argv,symbolTable *table,int IC,int *errorsC
         }
     }
 
-    /* if the head(entry node) is not empty
-        set the linked list to the Entry pointer*/
+    /* if the head(entry node) is not empty set the linked list to the Entry pointer*/
     if(head!=NULL) {
         *Entry=head;
     }
 }
 
-void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr,int errorsCounter){
+void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr){
     int num;
     LineHolder *prev=*curr;
     ExNode *head=NULL;
@@ -132,9 +133,8 @@ void checkExtern(ExNode **Extern,symbolTable *table,LineHolder **curr,int errors
         prev=prev->next;
     }
 
-    /* if the head(extern node) is not empty and there is no errors
-        set the linked list to the Extern pointer*/
-    if(head!=NULL && errorsCounter==0){
+    /* if the head(extern node) is not empty set the linked list to the Extern pointer*/
+    if(head!=NULL){
         *Extern=head;
     }
 }

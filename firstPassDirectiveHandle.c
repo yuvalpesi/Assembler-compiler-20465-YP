@@ -292,6 +292,16 @@ void handleData(char *Line, char *sourceFile, int lineNumber, int *errorCounter,
                 memmove(line,line+index, strlen(line));
                 continue;
             }
+
+            if(checkRealNumber(line)==True){
+                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %s is real number and the assembler dose not support real numbers \n",sourceFile,lineNumber,line);
+                (*errorCounter)++;
+                while (line[index]!=',')index++;
+                index++;
+                memmove(line,line+index, strlen(line));
+                continue;
+            }
+
             number=getNumberFromData(line,&index);/* get the number from the line upto comma or '\0'*/
             if(!isdigit(line[index-1]) && line[index]=='\0'){
                 fprintf(stderr,"Error in file %s: Extraneous text after end of command '%s' in line %d \n",sourceFile,line,lineNumber);

@@ -65,6 +65,18 @@ char *allocateStr(char *strFirst, char* strSec);
 int allDigits(char *str);
 
 /**
+ * Check if a given string represents a real number (floating-point number).
+ *
+ * This function examines whether the input string represents a real number by searching
+ * for a decimal point ('.') character. It can identify both positive and negative real
+ * numbers.
+ *
+ * @param str The input string to be checked.
+ * @return Returns `True` if the input string represents a real number, otherwise `False`.
+ */
+int checkRealNumber(char *str);
+
+/**
  * strDup - Creates a duplicate of a given string.
  *
  * This function creates a duplicate of the given string by allocating memory and copying

@@ -8,7 +8,7 @@ mcro m1
 sub  @r2,@r3
     bne END
 endmcro
-prn  -5
+prn  -5.3
 bne  W
 sub  @r1,@r4
 m1
@@ -18,6 +18,6 @@ L1:     inc  K
 jmp  W
 END:    stop error
 STR:    .string "abcdef"
-LENGTH: .data 6,-9,15
+LENGTH: .data 6.4,-9,15
 K:      .data 22
     .extern L3

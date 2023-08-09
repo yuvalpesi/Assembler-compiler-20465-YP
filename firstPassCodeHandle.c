@@ -76,6 +76,13 @@ void handleOneOperand(int command,char *function, char *Line, char *sourceFile, 
             codeNum=installBinary(function,command,0,immediateAddressing,A);
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
+
+            if(checkRealNumber(line)==True){
+                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %s is real number and the assembler dose not support real numbers\n",sourceFile,lineNumber,line);
+                (*errorCounter)++;
+                free(line);
+                return;
+            }
             number=atoi(line); /* get the number from the parameter */
 
             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
@@ -390,6 +397,13 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
 
         /* first operand opcode build argument */
         if(allDigits(firsStr)==True){
+            if(checkRealNumber(firsStr)==True){
+                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %s is real number and the assembler dose not support real numbers\n",sourceFile,lineNumber,firsStr);
+                (*errorCounter)++;
+                free(line);
+                free(firsStr);
+                return;
+            }
             number= atoi(firsStr);
 
             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){
@@ -445,6 +459,13 @@ void handleTowOperand(int command,char *function, char *Line, char *sourceFile, 
             addNode(head, createNodeItem(*IC, codeNum));
             (*IC)++;
         } else if(command==cmp && allDigits(line)==True){
+            if(checkRealNumber(line)==True){
+                fprintf(stderr,"Error in file %s: Invalid parameter in line %d, this number: %s is real number and the assembler dose not support real numbers\n",sourceFile,lineNumber,line);
+                (*errorCounter)++;
+                free(line);
+                free(firsStr);
+                return;
+            }
             number= atoi(line);
 
             if(number>WOLD_NUMBER_MAX_SIZE || number<WOLD_NUMBER_LOW_SIZE){

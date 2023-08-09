@@ -81,13 +81,26 @@ int allDigits(char *str){
     int i=str[0]=='-'?1:0;
 
     while(str[i]!='\0'){
-        if(!isdigit(str[i])){
+        if(!isdigit(str[i]) && str[i]!='.'){
             return False;
         }
         i++;
     }
     return True;
 }
+
+int checkRealNumber(char *str){
+    int i=str[0]=='-'?1:0;
+
+    while(str[i]!='\0' && str[i]!=','){
+        if(str[i]=='.'){
+            return True;
+        }
+        i++;
+    }
+    return False;
+}
+
 
 int allDigitsForData(char *str){
     int i=str[0]=='-'?1:0;
@@ -97,7 +110,7 @@ int allDigitsForData(char *str){
     }
 
     while(str[i]!='\0' && str[i]!=','){
-        if(!isdigit(str[i])){
+        if(!isdigit(str[i]) && str[i]!='.'){
             return i+1;
         }
         i++;
@@ -180,7 +193,7 @@ int findComma(char *str){
             }
 
             while (i<strlen(str)){
-                if(str[i]==',' || str[i]=='\n' || str[i]=='\0'){
+                if(str[i]=='.' ||str[i]==',' || str[i]=='\n' || str[i]=='\0'){
                     break;
                 } else if((isdigit(str[i]) || isalpha(str[i]))){
                     return False;

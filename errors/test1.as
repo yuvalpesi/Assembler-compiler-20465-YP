@@ -30,6 +30,7 @@ K2: .string "I am a very long string that will surely exceed the maximum length 
 
 ;data errors
     .data
+    .data 5.3
     .data lost, 4, 8, 15, 16, 23, 42
     .data --433, 653, 30
     .data 763, 599, ++875, 5
